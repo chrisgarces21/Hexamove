@@ -12,6 +12,18 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -163,6 +175,12 @@ input[type=time]{padding:9px 10px}
 .wa{background:#DCF8C6;color:#13241A;border-radius:14px 14px 14px 4px;padding:10px 12px;font-size:13.5px;line-height:1.4}
 :root[data-theme="dark"] .wa{background:#1F3B2D;color:#DDF3E6}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .wa{background:#1F3B2D;color:#DDF3E6}}
+.fold{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:0 16px}
+.fold>summary{padding:14px 0;font-weight:700;font-size:15px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary::after{content:"+";font-size:20px;color:var(--muted);font-weight:500}
+.fold[open]>summary::after{content:"\2013"}
+.fold>.inner{display:flex;flex-direction:column;gap:12px;padding-bottom:14px}
 .guide{width:100%;display:flex;flex-direction:column;gap:8px}
 .guide details{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 16px}
 .guide summary{font-weight:700;font-size:14px;cursor:pointer}
@@ -420,18 +438,19 @@ input[type=time]{padding:9px 10px}
         <div class="card"><div id="premioAhora"></div></div>
         <div class="card sun">
           <div class="row between"><h3 class="h3" style="color:var(--sun-ink)">Pase Hexamove</h3><span class="tag" style="background:var(--surface);color:var(--sun-ink)">$4.990 al mes</span></div>
-          <p class="small" style="color:var(--sun-ink)">Compites igual que todos, pero cada puesto gana un premio mejor.</p>
-          <div id="premioPase"></div>
+          <details class="mini"><summary class="small" style="color:var(--sun-ink);cursor:pointer;font-weight:600">Compites igual que todos, pero cada premio es mejor. Ver cuál</summary><div id="premioPase" style="margin-top:8px"></div></details>
           <button class="btn soft sm" id="btnPremium" style="align-self:flex-start"></button>
         </div>
         <h2 class="h2">Ranking de la semana</h2>
         <div class="card"><div class="list" id="rkLista"></div></div>
-        <h2 class="h2">Premios por puesto</h2>
-        <p class="small">El ranking se reinicia cada lunes. Los puntos salen de los minutos comprobados: la comprobación con sensor, reloj o QR da todos los puntos y la foto da la mitad.</p>
-        <div class="col" id="tablaPremios"></div>
-        <h2 class="h2">Mis premios</h2>
-        <p class="small">El premio lo entrega el aliado directo en su local. Muestras el código y listo.</p>
-        <div class="col" id="misCanjes"></div>
+        <details class="fold"><summary>Premios por puesto</summary><div class="inner">
+          <p class="small">El ranking se reinicia cada lunes. Los puntos salen de los minutos comprobados: la comprobación con sensor, reloj o QR da todos los puntos y la foto da la mitad.</p>
+          <div class="col" id="tablaPremios"></div>
+        </div></details>
+        <details class="fold"><summary>Mis premios</summary><div class="inner">
+          <p class="small">El premio lo entrega el aliado directo en su local. Muestras el código y listo.</p>
+          <div class="col" id="misCanjes"></div>
+        </div></details>
       </section>
 
       <!-- APTITUD -->
@@ -461,6 +480,7 @@ input[type=time]{padding:9px 10px}
           <div class="coach"><span class="hx" data-hx></span><div class="grow"><p class="cname">Lo que Hexi sabe de ti</p><div id="hexiSabe" style="font-size:14px;display:flex;flex-direction:column;gap:6px"></div></div></div>
           <button class="btn soft sm" id="btnEditar" style="align-self:flex-start">Editar mi plan</button>
         </div>
+        <details class="fold"><summary>Mis datos y cuenta</summary><div class="inner">
         <div class="card">
           <h3 class="h3">Tus datos y tu avance</h3>
           <p class="small" id="syncEstado">Se guardan en este dispositivo.</p>
@@ -477,15 +497,6 @@ input[type=time]{padding:9px 10px}
             <div class="row"><button class="btn sm" id="ceroSi" style="background:var(--danger);color:#fff">Sí, borrar todo</button><button class="btn line sm" id="ceroNo">Cancelar</button></div>
           </div>
         </div>
-        <div class="card">
-          <h3 class="h3">Comodines de racha</h3>
-          <p class="small">Te quedan <b id="comodines">5</b> días libres este mes. Úsalos y no pierdes la racha.</p>
-          <button class="btn soft sm" id="btnComodin" style="align-self:flex-start">Usar un comodín hoy</button>
-        </div>
-        <h2 class="h2">Insignias</h2>
-        <div class="badges" id="insignias"></div>
-        <h2 class="h2">Historial</h2>
-        <div class="col" id="historial"></div>
         <div class="card" style="border-style:dashed">
           <p class="lab">Tus datos</p>
           <div class="row" style="flex-wrap:wrap">
@@ -496,6 +507,14 @@ input[type=time]{padding:9px 10px}
           </div>
           <p class="small" id="demoDia" hidden></p>
         </div>
+        </div></details>
+        <div class="card">
+          <h3 class="h3">Comodines de racha</h3>
+          <p class="small">Te quedan <b id="comodines">5</b> días libres este mes. Úsalos y no pierdes la racha.</p>
+          <button class="btn soft sm" id="btnComodin" style="align-self:flex-start">Usar un comodín hoy</button>
+        </div>
+        <details class="fold"><summary>Insignias</summary><div class="inner"><div class="badges" id="insignias"></div></div></details>
+        <details class="fold"><summary>Historial</summary><div class="inner"><div class="col" id="historial"></div></div></details>
         <div class="guide">
     <details>
       <summary>Cómo se comprueba cada misión</summary>
@@ -1357,8 +1376,8 @@ function pintarRanking(){
   });
   var rl=$('rkLista');rl.innerHTML='';
   function fila(f,i){var d=document.createElement('div');d.className='li'+(f.yo?' me':'');d.innerHTML='<b style="width:26px">'+(i+1)+'</b><span class="grow">'+esc(f.n)+(f.yo?' (tú)':'')+(f.amigo?' · amigo':'')+'</span><b>'+f.p+'</b>';rl.appendChild(d);}
-  ri.lista.slice(0,8).forEach(fila);
-  if(ri.idx>=8){var s=document.createElement('p');s.className='small';s.style.textAlign='center';s.textContent='…';rl.appendChild(s);fila(ri.lista[ri.idx],ri.idx);}
+  ri.lista.slice(0,5).forEach(fila);
+  if(ri.idx>=5){var s=document.createElement('p');s.className='small';s.style.textAlign='center';s.textContent='…';rl.appendChild(s);fila(ri.lista[ri.idx],ri.idx);}
   var pr=$('porReclamar');pr.innerHTML='';
   var pend=S.semanas.filter(function(x){return !x.ok;});
   $('hPend').hidden=!pend.length;
