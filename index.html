@@ -8,6 +8,10 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -202,7 +206,7 @@ input[type=time]{padding:9px 10px}
         <div class="phonefield"><span class="pre">+56</span><input type="text" id="telefono" inputmode="tel" placeholder="9 1234 5678" autocomplete="tel-national"></div>
         <p class="small">Aquí te llegan los avisos y los comprobantes de tus misiones.</p>
         <p class="err" id="obErr" role="alert"></p>
-        <p class="small">Al comenzar aceptas que guardemos tus respuestas y tu avance para analizarlos en el proyecto Hexamove (Taller IN4102, U. de Chile). Solo los ve el equipo.</p>
+        <p class="small">Al comenzar aceptas que guardemos tus respuestas y tu avance para analizarlos en el proyecto Hexamove (Taller IN4102, U. de Chile). Solo los ve el equipo. Tu nombre y tus puntos semanales aparecen en el ranking global; tus lesiones y horarios no.</p>
         <div class="sp"></div>
         <button class="btn" id="btnStart">Comenzar</button>
       </section>
@@ -336,7 +340,7 @@ input[type=time]{padding:9px 10px}
         <div class="sp"></div>
         <button class="btn" id="btnTermine">Ya la terminé</button>
         <button class="btn line" id="btnCancelar">Cancelar</button>
-        <p class="small center" style="text-align:center">Demostración: el cronómetro corre 12 veces más rápido.</p>
+        <p class="small center" style="text-align:center">El cronómetro corre en tiempo real.</p>
       </section>
 
       <!-- VALIDAR -->
@@ -409,6 +413,7 @@ input[type=time]{padding:9px 10px}
           <p class="small" id="rkFalta" style="color:var(--brand-deep);font-weight:600"></p>
           <p class="small" id="rkCierra" style="color:var(--brand-deep)"></p>
         </div>
+        <div class="card" id="metaSem"></div>
         <h2 class="h2" id="hPend" hidden>Premios por reclamar</h2>
         <div class="col" id="porReclamar"></div>
         <h2 class="h2">Tu premio</h2>
@@ -482,14 +487,14 @@ input[type=time]{padding:9px 10px}
         <h2 class="h2">Historial</h2>
         <div class="col" id="historial"></div>
         <div class="card" style="border-style:dashed">
-          <p class="lab">Herramientas de demostración</p>
+          <p class="lab">Tus datos</p>
           <div class="row" style="flex-wrap:wrap">
-            <button class="btn soft sm" id="btnDia">Avanzar un día</button>
-            <button class="btn soft sm" id="btnSeed">Cargar semana de ejemplo</button>
-            <button class="btn soft sm" id="btnSemana">Cerrar la semana</button>
-            <button class="btn line sm" id="btnReset">Reiniciar</button>
+            <button class="btn soft sm" hidden id="btnDia">Avanzar un día</button>
+            <button class="btn soft sm" hidden id="btnSeed">Cargar semana de ejemplo</button>
+            <button class="btn soft sm" hidden id="btnSemana">Cerrar la semana</button>
+            <button class="btn line sm" id="btnReset">Borrar mis datos y empezar de cero</button>
           </div>
-          <p class="small" id="demoDia"></p>
+          <p class="small" id="demoDia" hidden></p>
         </div>
         <div class="guide">
     <details>
@@ -510,7 +515,7 @@ input[type=time]{padding:9px 10px}
         <li>Hexi, un coach que recuerda tus gustos y objetivos, revisa tu semana y ajusta la dificultad.</li>
         <li>Comprobación segmentada, ranking semanal con premios por puesto, Pase premium, rachas, comodines, grupo y evaluación de aptitud.</li>
       </ul>
-      <p class="small" style="margin-top:8px">No incluye sensores reales ni servidores: el ranking de rivales es simulado. Tus datos se guardan en este dispositivo y, si tienes acceso, en la base del equipo. Hexi responde con un modelo de lenguaje cuando está disponible.</p>
+      <p class="small" style="margin-top:8px">No incluye sensores reales. Tus datos se guardan en este dispositivo y en la base del proyecto cuando hay conexión; si el equipo aún no la conectó, el ranking de rivales es simulado. Hexi responde con un modelo de lenguaje cuando está disponible.</p>
     </details>
   </div>
       </section>
@@ -669,7 +674,7 @@ var METODOS={
 var INSIG=[{id:'primera',n:'Primera misión',i:'leaf'},{id:'racha3',n:'3 días seguidos',i:'flame'},{id:'racha7',n:'Una semana',i:'bolt'},{id:'comp5',n:'5 comprobadas',i:'pin'},{id:'canje',n:'Primer premio',i:'gift'},{id:'grupo',n:'Movida grupal',i:'users'},{id:'hexi',n:'Hablaste con Hexi',i:'chat'},{id:'variada',n:'4 tipos distintos',i:'star'}];
 
 /* ============ fechas ============ */
-function ahora(){return new Date(Date.now()+S.off*864e5);}
+function ahora(){return new Date();}
 function isoD(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
 function fmt(i){var p=i.split('-');return p[2]+'/'+p[1];}
 function isoOff(n){var d=ahora();d.setDate(d.getDate()+n);return isoD(d);}
@@ -982,7 +987,7 @@ function empezar(){
   var sensor=(actual.t==='desplazamiento'||actual.t==='cardio');
   $('icSensor').innerHTML=ic(sensor?'phone':(actual.t==='recinto'?'qr':'pen'));
   show('curso');tick();clearInterval(timer);
-  timer=setInterval(function(){restante-=12;if(restante<=0){restante=0;clearInterval(timer);toast('Tiempo cumplido. Ya puedes comprobarla.');}tick();},1000);
+  timer=setInterval(function(){restante-=1;if(restante<=0){restante=0;clearInterval(timer);toast('Tiempo cumplido. Ya puedes comprobarla.');}tick();},1000);
 }
 function tick(){
   var mm=Math.floor(restante/60),ss=restante%60;
@@ -1004,7 +1009,7 @@ function tick(){
 }
 $('btnCancelar').onclick=function(){clearInterval(timer);show('hoy');};
 $('btnTermine').onclick=function(){clearInterval(timer);pintarValidar();show('validar');};
-$('valVolver').onclick=function(){show('curso');tick();timer=setInterval(function(){restante-=12;if(restante<=0){restante=0;clearInterval(timer);}tick();},1000);};
+$('valVolver').onclick=function(){show('curso');tick();timer=setInterval(function(){restante-=1;if(restante<=0){restante=0;clearInterval(timer);}tick();},1000);};
 
 /* ============ comprobación ============ */
 var metodoPend=null;
@@ -1257,7 +1262,29 @@ function sumarDias(iso,n){var d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+
 function lunesDe(iso){var d=new Date(iso+'T12:00:00');return sumarDias(iso,-((d.getDay()+6)%7));}
 function ptsRival(i,lunes,dia){return Math.round(CAPS[i]*(.7+.6*h01(LIGA[i]+lunes))*(dia+1)/7);}
 function ptsSemana(lunes){var fin=sumarDias(lunes,6);return S.misiones.filter(function(m){return m.fecha>=lunes&&m.fecha<=fin;}).reduce(function(a,m){return a+ptsM(m);},0);}
+var FB={db:null,uid:null,listo:false,fail:false,sem:{},unsub:null,w:null,ultimo:''};
+function fbOn(){return !!(window.HEXA_FB&&window.HEXA_FB.apiKey&&window.firebase);}
+function suscribirSemana(){
+  if(!FB.db)return;var l=lunesDe(isoOff(0));if(FB.w===l)return;if(FB.unsub)FB.unsub();FB.w=l;
+  FB.unsub=FB.db.collection('ranking').where('w','==',l).limit(300).onSnapshot(function(q){var a=[];q.forEach(function(d){a.push(d.data());});FB.sem[l]=a;if(vistaActual==='ranking')pintarRanking();},function(){});
+}
+function cargarSemana(l){
+  if(!FB.db){FB.sem[l]=[];return;}
+  FB.db.collection('ranking').where('w','==',l).limit(300).get().then(function(q){var a=[];q.forEach(function(d){a.push(d.data());});FB.sem[l]=a;},function(){FB.sem[l]=[];}).then(function(){if(vistaActual==='ranking')pintarRanking();else cerrarSemanas();});
+}
+function publicarRanking(){
+  if(!FB.db||!FB.uid||!S.onboarded)return;
+  var l=lunesDe(isoOff(0)),p=ptsSemana(l),al=String(S.nombre||'').trim().split(/\s+/)[0].slice(0,24)||'Anónimo',k=l+':'+p+':'+al+':'+(S.premium?1:0);
+  if(p<=0||FB.ultimo===k)return;
+  FB.db.collection('ranking').doc(l+'_'+FB.uid).set({uid:FB.uid,alias:al,w:l,pts:p,premium:!!S.premium,ts:Date.now()}).then(function(){FB.ultimo=k;},function(){});
+}
 function listaRanking(lunes,dia){
+  if(fbOn()){
+    var r=(FB.sem[lunes]||[]).filter(function(x){return x.uid!==FB.uid;}).map(function(x){return {n:x.alias,p:x.pts};}),mp=ptsSemana(lunes);
+    if(mp>0)r.push({n:S.nombre,p:mp,yo:true});
+    r.sort(function(x,y){return y.p-x.p||(x.yo?1:0)-(y.yo?1:0);});
+    return r;
+  }
   var l=LIGA.map(function(n,i){return {n:n,p:ptsRival(i,lunes,dia),amigo:i<4};});
   l.push({n:S.nombre,p:ptsSemana(lunes),yo:true});
   l.sort(function(a,b){return b.p-a.p||(a.yo?1:0)-(b.yo?1:0);});
@@ -1273,26 +1300,40 @@ function rankInfo(){
 function cerrarSemanas(){
   var hoyL=lunesDe(isoOff(0));
   if(!S.semIni){S.semIni=hoyL;save();return;}
-  var l=S.semIni,hubo=false;
+  var l=S.semIni,hubo=false,bloq=false;
   while(l<hoyL){
     var pts=ptsSemana(l);
     if(pts>0){
+      if(fbOn()&&FB.sem[l]===undefined){if(!FB.listo&&!FB.fail){bloq=true;break;}if(FB.fail){FB.sem[l]=[];}else{cargarSemana(l);bloq=true;break;}}
       var r=listaRanking(l,6),pos=r.findIndex(function(x){return x.yo;})+1,t=tierDe(pos);
       S.semanas.unshift({w:l,pos:pos,n:r.length,pts:pts,tier:t.id,ok:false});
     }
     l=sumarDias(l,7);hubo=true;
   }
+  if(bloq){if(S.semIni!==l){S.semIni=l;save();}return;}
   if(hubo||S.semIni!==hoyL){S.semIni=hoyL;save();}
 }
 function tierPorId(id){return TIERS.filter(function(t){return t.id===id;})[0]||TIER_SIN;}
 function filaPremio(pr,etq){return '<div class="row"><span class="ico s">'+ic(pr.i)+'</span><div class="grow"><p class="small" style="margin:0">'+etq+'</p><b>'+pr.n+'</b><p class="small" style="margin:0">'+pr.p+'</p></div></div>';}
+function pintarMeta(){
+  var lunes=lunesDe(isoOff(0)),fin=sumarDias(lunes,6),ms=S.misiones.filter(function(m){return m.fecha>=lunes&&m.fecha<=fin;}),dias={};
+  var min=ms.reduce(function(a,m){return a+m.min;},0);ms.forEach(function(m){dias[m.fecha]=1;});
+  var META=150,pc=Math.min(100,Math.round(min*100/META)),quedan=7-diaSemana(),falta=Math.max(0,META-min),porDia=Math.ceil(falta/quedan);
+  var msg=falta===0?'Cumpliste la meta de la OMS esta semana. Todo lo que sumes ahora es ganancia.':'Te faltan '+falta+' min. Con '+porDia+' min al día '+(quedan===1?'hoy':'hasta el domingo')+' llegas.';
+  var ob=S.objetivos.length?'<p class="small" style="margin:0"><b style="color:var(--ink)">Tu objetivo:</b> '+esc(lista(S.objetivos.map(function(x){return x.toLowerCase();})))+'.</p>':'';
+  $('metaSem').innerHTML='<p class="lab">Tu meta de la semana</p><p class="big" style="margin:0">'+min+' <span style="font-size:18px">/ '+META+' min</span></p>'+
+   '<div style="height:10px;border-radius:99px;background:var(--track);overflow:hidden"><div style="height:100%;width:'+pc+'%;background:var(--brand);border-radius:99px"></div></div>'+
+   '<p class="small" style="margin:0">'+nd_(dias)+' '+(Object.keys(dias).length===1?'día activo':'días activos')+' esta semana. '+msg+'</p>'+ob;
+}
+function nd_(d){return Object.keys(d).length;}
 function pintarRanking(){
-  cerrarSemanas();
+  suscribirSemana();
+  cerrarSemanas();pintarMeta();
   var ri=rankInfo(),t=tierDe(ri.pos),dia=diaSemana(),dias=6-dia;
   $('rkPos').textContent=ri.pos?'#'+ri.pos:'Sin puesto';
   $('rkDe').textContent=ri.pos?'de '+ri.n+' personas · '+ri.pts+' puntos esta semana':'Haz una misión comprobada para entrar al ranking de la semana.';
   $('rkTier').textContent=ri.pos?t.n:'';$('rkTier').hidden=!ri.pos;
-  $('rkCierra').textContent=dias===0?'La semana cierra hoy.':'La semana cierra el domingo, en '+dias+(dias===1?' día.':' días.');
+  $('rkCierra').textContent=(dias===0?'La semana cierra hoy.':'La semana cierra el domingo, en '+dias+(dias===1?' día.':' días.'))+(fbOn()?(FB.fail?' Sin conexión con el ranking global.':(FB.listo?'':' Conectando con el ranking global…')):'');
   var falta='';
   if(!ri.pos){falta='Cada misión comprobada suma puntos: más minutos y mejor comprobación, más puntos.';}
   else{
@@ -1422,7 +1463,7 @@ function pintarPerfil(){
     d.innerHTML='<div class="row between"><b>'+esc(m.n)+'</b><span class="tag '+m.conf+'">'+m.conf+'</span></div><p class="small">'+m.min+' min · '+esc(m.metodo)+' · '+(ptsM(m)>0?'+'+ptsM(m)+' puntos':'sin puntos')+' · '+fmt(m.fecha)+(m.sent?' · '+({facil:'fácil',justa:'justa',dificil:'difícil'}[m.sent]):'')+'</p>';
     h.appendChild(d);
   });
-  $('demoDia').textContent='Día simulado: '+fmt(isoOff(0))+(S.off?' (+'+S.off+')':'');
+  
 }
 $('btnComodin').onclick=function(){
   if(S.comodines<=0){toast('No te quedan comodines este mes.');return;}
@@ -1463,7 +1504,7 @@ window.__sync=function(){
   nube.timer=setTimeout(function(){
     if(nube.ocupado){window.__sync();return;}
     nube.ocupado=true;
-    nube.doc.set(resumenNube()).then(function(){estadoNube('Guardado en la nube del equipo.');}).catch(function(){nube.off=true;estadoNube('No se pudo guardar en la nube del equipo. Descarga tus datos para enviarlos.');}).then(function(){nube.ocupado=false;});
+    nube.doc.set(resumenNube()).then(function(){estadoNube('Guardado en la nube del equipo.');publicarRanking();}).catch(function(){nube.off=true;estadoNube('No se pudo guardar en la nube del equipo. Descarga tus datos para enviarlos.');}).then(function(){nube.ocupado=false;});
   },1500);
 };
 function exportarDatos(){
@@ -1476,25 +1517,32 @@ function exportarDatos(){
     }).catch(mostrar);}else mostrar();
   }catch(e){mostrar();}
 }
+function enlazar(doc,id){
+  nube.id=id;nube.doc=doc;
+  return doc.get().then(function(snap){
+    var rem=snap.exists?snap.data():null;
+    if(rem&&rem.s&&rem.s.onboarded&&(!S.onboarded||rem.ts>(S.ts||0))){
+      var ns=Object.assign(blank(),rem.s,{chat:S.chat||[]});ns.ts=rem.ts;
+      try{localStorage.setItem(KEY,JSON.stringify(ns));}catch(e){}
+      location.reload();return;
+    }
+    nube.listo=true;estadoNube('Se guarda en la nube del equipo cada vez que avanzas.');
+    if(S.onboarded)window.__sync();
+  });
+}
 (function iniciarNube(){
   try{
+    if(fbOn()){
+      try{
+        firebase.initializeApp(window.HEXA_FB);var fs=firebase.firestore();
+        firebase.auth().signInAnonymously().then(function(c){FB.db=fs;FB.uid=c.user.uid;return enlazar(fs.collection('usuarios').doc(c.user.uid),c.user.uid);}).then(function(){FB.listo=true;suscribirSemana();publicarRanking();if(vistaActual==='ranking')pintarRanking();}).catch(function(){FB.fail=true;nube.off=true;estadoNube('Sin conexión con la base del proyecto. Descarga tus datos para enviarlos.');if(vistaActual==='ranking')pintarRanking();});
+      }catch(e){FB.fail=true;nube.off=true;}
+      return;
+    }
     if(!(window.claude&&claude.use))return;
     Promise.all([claude.use('db'),claude.use('user')]).then(function(r){
       var db=r[0],u=r[1];if(!db||!u)return;
-      return u.id().then(function(id){
-        if(!id)return;
-        nube.id=id;nube.doc=db.collection('usuarios').doc(id);
-        return nube.doc.get().then(function(snap){
-          var rem=snap.exists?snap.data():null;
-          if(rem&&rem.s&&rem.s.onboarded&&(!S.onboarded||rem.ts>(S.ts||0))){
-            var ns=Object.assign(blank(),rem.s,{chat:S.chat||[]});ns.ts=rem.ts;
-            try{localStorage.setItem(KEY,JSON.stringify(ns));}catch(e){}
-            location.reload();return;
-          }
-          nube.listo=true;estadoNube('Se guarda en la nube del equipo cada vez que avanzas.');
-          if(S.onboarded)window.__sync();
-        });
-      });
+      return u.id().then(function(id){if(!id)return;return enlazar(db.collection('usuarios').doc(id),id);});
     }).catch(function(){nube.off=true;});
   }catch(e){}
 })();

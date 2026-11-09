@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Datos completos de cada persona: solo ella misma (el equipo los ve desde la consola de Firebase).
+    match /usuarios/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    // Ranking global: público para quien haya abierto la app; cada persona solo escribe su fila.
+    match /ranking/{id} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && id == request.resource.data.w + '_' + request.auth.uid
+        && request.resource.data.pts is int && request.resource.data.pts >= 0 && request.resource.data.pts < 5000
+        && request.resource.data.alias is string && request.resource.data.alias.size() <= 30;
+      allow delete: if false;
+    }
+  }
+}
