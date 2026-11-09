@@ -1,0 +1,1558 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hexamove</title>
+<meta name="theme-color" content="#147A6B">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* Concepto: app móvil sobre lienzo sereno. Superficies blancas suaves, teal profundo como acción, tintes de menta, lila y rosa solo para dar contexto. */
+:root{
+  --bg:#EEF3F1; --surface:#FFFFFF; --surface2:#F3F7F6; --ink:#16213A; --muted:#5B6878; --line:#DCE5E2;
+  --brand:#14796A; --brand-ink:#FFFFFF; --brand-soft:#D9F2EA; --brand-deep:#0C5A4E;
+  --lila:#E6E9FA; --lila-ink:#3B438A; --rosa:#FBE4F1; --rosa-ink:#8C2B63; --sun:#FBEFC8; --sun-ink:#6B4B00;
+  --gold:#F0BE4F; --danger:#B3402A; --shadow:0 1px 2px rgba(22,33,58,.06),0 8px 24px rgba(22,33,58,.08);
+  --frame:#16213A; --display:'Outfit','DM Sans',system-ui,sans-serif; --body:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --track:#DDE7E4;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B1118; --surface:#151E29; --surface2:#1B2633; --ink:#E7EEF3; --muted:#9AA8B6; --line:#27334A;
+    --brand:#4CCFB2; --brand-ink:#052B24; --brand-soft:#16352F; --brand-deep:#7BE0C9;
+    --lila:#222A4A; --lila-ink:#B7BFF5; --rosa:#3A2335; --rosa-ink:#F2B1D6; --sun:#3A3118; --sun-ink:#F3D98A;
+    --gold:#F0BE4F; --danger:#F08A73; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+    --frame:#2B3748; --track:#26333F; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B1118; --surface:#151E29; --surface2:#1B2633; --ink:#E7EEF3; --muted:#9AA8B6; --line:#27334A;
+  --brand:#4CCFB2; --brand-ink:#052B24; --brand-soft:#16352F; --brand-deep:#7BE0C9;
+  --lila:#222A4A; --lila-ink:#B7BFF5; --rosa:#3A2335; --rosa-ink:#F2B1D6; --sun:#3A3118; --sun-ink:#F3D98A;
+  --gold:#F0BE4F; --danger:#F08A73; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  --frame:#2B3748; --track:#26333F; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;color:inherit}
+p{margin:0}
+h1,h2,h3{margin:0;font-family:var(--display);font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+.stage{height:100%}
+/* La app ocupa toda la ventana. En pantallas anchas, menú lateral. */
+.phone{position:relative;width:100%;height:100%;background:var(--surface2);display:flex;flex-direction:column;overflow:hidden}
+.views{position:relative;flex:1;min-height:0}
+.view{--w:640px;position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:18px max(18px,calc((100% - var(--w))/2)) 26px;display:none;flex-direction:column;gap:14px;scrollbar-width:thin}
+.view.on{display:flex}
+.view[data-v^=ob]{--w:460px}
+.nav{flex:none;display:none;background:var(--surface);border-top:1px solid var(--line);padding:6px max(6px,env(safe-area-inset-left,0px)) 8px}
+.navbrand{display:none}
+.nav.on{display:flex;justify-content:space-around}
+.nav button{flex:1;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;border-radius:12px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer}
+.nav button.act{color:var(--brand);background:var(--brand-soft)}
+.nav button:focus-visible,.btn:focus-visible,.chip:focus-visible,.opt:focus-visible,input:focus-visible,.row-btn:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+svg.i.s{width:18px;height:18px}svg.i.l{width:28px;height:28px}
+.h1{font-size:26px;line-height:1.15}.h2{font-size:20px;line-height:1.2}.h3{font-size:16px}
+.small{font-size:13px;color:var(--muted);line-height:1.4}
+.lab{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.card.mint{background:var(--brand-soft);border-color:transparent}
+.card.lila{background:var(--lila);border-color:transparent}
+.card.rosa{background:var(--rosa);border-color:transparent}
+.card.sun{background:var(--sun);border-color:transparent}
+.card.lift{box-shadow:var(--shadow)}
+.row{display:flex;gap:10px;align-items:center}
+.between{justify-content:space-between}
+.col{display:flex;flex-direction:column;gap:10px}
+.grow{flex:1;min-width:0}
+.center{text-align:center;align-items:center}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:16px;background:var(--brand);color:var(--brand-ink);font-weight:700;font-size:15px;padding:14px 16px;cursor:pointer;transition:transform .12s,filter .12s}
+.btn:hover{filter:brightness(1.05)}.btn:active{transform:scale(.98)}
+.btn.soft{background:var(--brand-soft);color:var(--brand-deep)}
+.btn.line{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
+.btn.sm{width:auto;padding:9px 14px;font-size:13px;border-radius:12px}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:none;transform:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);padding:8px 14px;font-size:14px;font-weight:500;cursor:pointer;user-select:none}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand-deep);font-weight:600}
+.chip.add{border-style:dashed;color:var(--muted)}
+.chip.static{cursor:default}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 9px;background:var(--surface2);color:var(--muted)}
+.tag.alta{background:var(--brand-soft);color:var(--brand-deep)}.tag.media{background:var(--sun);color:var(--sun-ink)}.tag.baja{background:var(--surface2);color:var(--muted)}
+.tag.lil{background:var(--lila);color:var(--lila-ink)}
+input[type=text],input[type=time]{width:100%;border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;font:inherit;font-size:15px;background:var(--surface);color:var(--ink)}
+input[type=time]{padding:9px 10px}
+.seg{display:flex;background:var(--surface2);border-radius:14px;padding:4px;gap:4px}
+.seg button{flex:1;border:0;background:transparent;padding:10px 4px;border-radius:10px;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(22,33,58,.15)}
+.bar{height:8px;border-radius:999px;background:var(--track);overflow:hidden}
+.bar span{display:block;height:100%;border-radius:999px;background:var(--brand);transition:width .5s}
+.steps{display:flex;gap:6px}.steps i{flex:1;height:4px;border-radius:4px;background:var(--track)}.steps i.on{background:var(--brand)}
+/* coach */
+.hx{flex:none;width:32px;height:32px;display:grid;place-items:center;color:var(--brand)}
+.hx svg{width:32px;height:32px}
+.hx.s{width:20px;height:20px}.hx.s svg{width:20px;height:20px}
+#quick{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}#quick .chip{flex:none}
+#chatForm{position:sticky;bottom:-22px;background:var(--surface2);padding:8px 0 22px;margin-bottom:-22px}
+.coach{display:flex;gap:10px;align-items:flex-start}
+.bubble{background:var(--surface);border:1px solid var(--line);border-radius:6px 18px 18px 18px;padding:11px 14px;font-size:14.5px;line-height:1.45;max-width:100%}
+.bubble.me{background:var(--brand);color:var(--brand-ink);border-color:transparent;border-radius:18px 6px 18px 18px;align-self:flex-end}
+.bubble .act{margin-top:8px}
+.cname{font-size:12px;font-weight:700;color:var(--brand);margin-bottom:2px}
+.typing{display:inline-flex;gap:4px;padding:4px 2px}.typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:b 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+.chatlog{display:flex;flex-direction:column;gap:12px;flex:1}
+.chatbar{display:flex;gap:8px;align-items:center}
+.chatbar input{flex:1}
+.send{flex:none;width:46px;height:46px;border-radius:14px;border:0;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;cursor:pointer}
+/* tiempos */
+.times{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.opt{border:1.5px solid var(--line);background:var(--surface);border-radius:18px;padding:14px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.opt b{font-family:var(--display);font-size:26px;line-height:1}.opt span{font-size:12px;color:var(--muted)}
+.opt:hover{border-color:var(--brand)}
+.opt.on{background:var(--brand-soft);border-color:var(--brand)}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;color:var(--muted);font-weight:600}
+.day .dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);color:transparent}
+.day.m .dot{background:var(--brand);color:var(--brand-ink)}
+.day.c .dot{background:var(--sun);color:var(--sun-ink)}
+.day.hoy{color:var(--ink)}.day.hoy .dot{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--brand)}
+.streak{display:flex;align-items:center;gap:6px;background:var(--sun);color:var(--sun-ink);border-radius:999px;padding:6px 12px;font-weight:700;font-size:14px}
+.coin{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--gold);color:#5A3D00;font-size:11px;font-weight:700;font-family:var(--display)}
+.big{font-family:var(--display);font-weight:600;font-size:44px;line-height:1;letter-spacing:-.02em}
+.ico{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand-deep);flex:none}
+.ico.l{background:var(--lila);color:var(--lila-ink)}.ico.r{background:var(--rosa);color:var(--rosa-ink)}.ico.s{background:var(--sun);color:var(--sun-ink)}
+.ring{position:relative;width:196px;height:196px;margin:6px auto}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .t{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:600;font-size:42px}
+.checks{display:flex;flex-direction:column;gap:8px}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14.5px}
+.chk .b{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:transparent;margin-top:1px}
+.chk.now .b{border-color:var(--brand)}.chk.done .b{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.chk.done{color:var(--muted)}
+.list{display:flex;flex-direction:column}
+.li{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}
+.li.me{background:var(--brand-soft);border-radius:12px;padding:10px;border-bottom:0}
+.row-btn{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px;cursor:pointer}
+.row-btn.off{opacity:.55}
+.badges{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.badge{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:11px;color:var(--muted);line-height:1.2}
+.badge .d{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);color:var(--muted)}
+.badge.got{color:var(--ink);font-weight:600}.badge.got .d{background:var(--sun);color:var(--sun-ink)}
+.toast{position:absolute;left:50%;width:calc(100% - 32px);max-width:420px;bottom:18px;background:var(--ink);color:var(--bg);border-radius:14px;padding:12px 14px;font-size:13.5px;line-height:1.4;opacity:0;transform:translate(-50%,10px);transition:.25s;pointer-events:none;z-index:20}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.overlay{position:absolute;inset:0;background:rgba(10,16,24,.72);display:none;align-items:center;justify-content:center;z-index:30;padding:30px}
+.overlay.on{display:flex}
+.sheet{background:var(--surface);border-radius:24px;padding:22px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;width:100%}
+.spin{width:44px;height:44px;border-radius:50%;border:4px solid var(--track);border-top-color:var(--brand);animation:sp .9s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.scan{position:relative;width:150px;height:150px;border-radius:18px;background:var(--surface2);display:grid;place-items:center;color:var(--muted);overflow:hidden}
+.scan::after{content:"";position:absolute;left:8px;right:8px;height:3px;background:var(--brand);border-radius:3px;animation:sc 1.1s ease-in-out infinite alternate}
+@keyframes sc{from{top:12px}to{top:132px}}
+.wa{background:#DCF8C6;color:#13241A;border-radius:14px 14px 14px 4px;padding:10px 12px;font-size:13.5px;line-height:1.4}
+:root[data-theme="dark"] .wa{background:#1F3B2D;color:#DDF3E6}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .wa{background:#1F3B2D;color:#DDF3E6}}
+.guide{width:100%;display:flex;flex-direction:column;gap:8px}
+.guide details{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 16px}
+.guide summary{font-weight:700;font-size:14px;cursor:pointer}
+.guide ul{margin:10px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.err{color:var(--danger);font-size:12.5px}
+.sp{flex:1}
+@media (min-width:900px){
+  .phone{flex-direction:row}
+  .nav{order:-1;width:236px;flex-direction:column;justify-content:flex-start;gap:4px;padding:22px 14px;border-top:0;border-right:1px solid var(--line)}
+  .nav.on{display:flex;justify-content:flex-start}
+  .nav button{flex:none;flex-direction:row;gap:12px;justify-content:flex-start;font-size:14.5px;padding:12px 14px}
+  .navbrand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;letter-spacing:.14em;font-size:17px;padding:2px 10px 20px}
+  .navbrand svg{width:28px;height:28px}
+  .views{min-width:0}
+}
+.phonefield{display:flex;align-items:center;gap:8px}
+.phonefield .pre{flex:none;font-weight:600;color:var(--muted);padding:0 2px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+
+<div class="stage">
+  <div class="phone" id="phone">
+    <div class="views">
+
+      <!-- BIENVENIDA -->
+      <section class="view on" data-v="ob0">
+        <div class="sp"></div>
+        <div class="row" style="gap:12px"><svg viewBox="0 0 32 32" width="46" height="46"><polygon points="16,2 28,9 28,23 16,30 4,23 4,9" fill="var(--brand)"/><path d="M11 12v8M21 12v8M11 16h10" stroke="var(--brand-ink)" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg><span class="h1" style="letter-spacing:.12em">HEXAMOVE</span></div>
+        <h1 class="h1" style="font-size:30px">El ejercicio que cabe en tu día real.</h1>
+        <p class="small" style="font-size:15px">Misiones de 5 a 20 minutos que calzan con tu jornada. Las compruebas con tu celular y sumas puntos en un ranking semanal y ganas premios reales.</p>
+        <div class="card mint">
+          <div class="coach"><span class="hx" id="hxWelcome"></span><div><p class="cname">Hexi, tu coach</p><p style="font-size:14.5px">Hola. Voy a acompañarte. Antes de empezar quiero conocerte un poco: tus gustos, tu nivel y los horarios en que sí puedes.</p></div></div>
+        </div>
+        <label class="small" for="nombre">¿Cómo te llamo?</label>
+        <input type="text" id="nombre" placeholder="Tu nombre" autocomplete="given-name">
+        <label class="small" for="telefono">Tu celular</label>
+        <div class="phonefield"><span class="pre">+56</span><input type="text" id="telefono" inputmode="tel" placeholder="9 1234 5678" autocomplete="tel-national"></div>
+        <p class="small">Aquí te llegan los avisos y los comprobantes de tus misiones.</p>
+        <p class="err" id="obErr" role="alert"></p>
+        <p class="small">Al comenzar aceptas que guardemos tus respuestas y tu avance para analizarlos en el proyecto Hexamove (Taller IN4102, U. de Chile). Solo los ve el equipo.</p>
+        <div class="sp"></div>
+        <button class="btn" id="btnStart">Comenzar</button>
+      </section>
+
+      <section class="view" data-v="ob1">
+        <div class="steps"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+        <p class="lab">Paso 1 de 5</p>
+        <h2 class="h1">¿Qué te gusta hacer?</h2>
+        <p class="small">Elige todo lo que te tinque. Si no está en la lista, agrégalo con Otro.</p>
+        <div class="chips" id="gustos"></div>
+        <div class="sp"></div>
+        <button class="btn" data-go="ob2">Siguiente</button>
+      </section>
+
+      <section class="view" data-v="ob2">
+        <div class="steps"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+        <p class="lab">Paso 2 de 5</p>
+        <h2 class="h1">¿Qué quieres lograr?</h2>
+        <p class="small">Esto me ayuda a elegir misiones con sentido para ti.</p>
+        <div class="chips" id="objetivos"></div>
+        <h2 class="h2" style="margin-top:8px">¿Cómo estás hoy?</h2>
+        <div class="col" id="nivel">
+          <button class="row-btn" data-val="1"><span class="grow"><b>Parto de cero</b><br><span class="small">Hace tiempo que no me muevo con regularidad</span></span></button>
+          <button class="row-btn" data-val="2"><span class="grow"><b>A veces me muevo</b><br><span class="small">Lo hago, pero me cuesta ser constante</span></span></button>
+          <button class="row-btn" data-val="3"><span class="grow"><b>Estoy activo</b><br><span class="small">Entreno seguido y busco sostenerlo</span></span></button>
+        </div>
+        <div class="sp"></div>
+        <button class="btn" data-go="ob3">Siguiente</button>
+      </section>
+
+      <section class="view" data-v="ob3">
+        <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+        <p class="lab">Paso 3 de 5</p>
+        <h2 class="h1">¿Hay algo que cuidar?</h2>
+        <p class="small">No te propondré ejercicios que carguen esa zona. Si marcas una condición de salud, reviso si puedes usar la app. Puedes cambiarlo cuando quieras.</p>
+        <div class="chips" id="lesiones"></div>
+        <div class="card sun"><p class="small" style="color:var(--sun-ink)"><b>Esto no reemplaza a un médico.</b> Si tienes una condición diagnosticada, consúltala antes de empezar.</p></div>
+        <div class="sp"></div>
+        <button class="btn" data-go="ob4">Siguiente</button>
+      </section>
+
+      <section class="view" data-v="ob4">
+        <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+        <p class="lab">Paso 4 de 5</p>
+        <h2 class="h1">¿Cuándo estás libre?</h2>
+        <p class="small">Solo te escribo dentro de estos bloques, a una hora al azar. Nunca en medio de una reunión.</p>
+        <div class="chips" id="bloques"></div>
+        <h3 class="h3" style="margin-top:4px">Ajusta el horario de cada bloque</h3>
+        <div class="col" id="horarios"></div>
+        <div class="sp"></div>
+        <button class="btn" data-go="ob5">Siguiente</button>
+      </section>
+
+      <section class="view" data-v="ob5">
+        <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+        <p class="lab">Paso 5 de 5</p>
+        <h2 class="h1">¿Por dónde te aviso?</h2>
+        <p class="small">El aviso llega a tu celular por el canal que elijas. Ese mismo mensaje sirve de comprobante cuando reclamas tu premio.</p>
+        <div class="seg" id="canal">
+          <button data-val="WhatsApp" class="on">WhatsApp</button><button data-val="SMS">SMS</button>
+        </div>
+        <div class="card mint">
+          <div class="coach"><span class="hx" id="hxResumen"></span><div><p class="cname">Hexi</p><p id="resumenOb" style="font-size:14.5px"></p></div></div>
+        </div>
+        <div class="sp"></div>
+        <button class="btn" id="finOb">Crear mi plan</button>
+      </section>
+
+      <!-- HOY -->
+      <section class="view" data-v="hoy">
+        <div class="row between">
+          <div><p class="small" id="saludoDia">Martes</p><h1 class="h1" id="saludo">Hola</h1></div>
+          <div class="streak" id="rachaBox"></div>
+        </div>
+
+        <div class="card mint" id="coachCard">
+          <div class="coach"><span class="hx" data-hx></span><div class="grow"><p class="cname">Hexi</p><p id="coachMsg" style="font-size:14.5px"></p></div></div>
+          <div id="moodBox">
+            <p class="small" style="margin-bottom:8px;color:var(--brand-deep)">¿Cómo llegas hoy?</p>
+            <div class="chips" id="moods"></div>
+          </div>
+          <p id="moodReply" style="font-size:14.5px" hidden></p>
+        </div>
+
+        <div class="card" id="avisoCard">
+          <div class="row" style="gap:10px"><span class="ico l" id="avisoIco"></span><div class="grow"><p class="small" id="avisoCanal"></p><p id="avisoTexto" style="font-weight:600"></p></div></div>
+        </div>
+
+        <div class="card" id="tiempoCard">
+          <div class="row between"><h3 class="h3">Tu tiempo de hoy</h3><span class="small" id="tiempoTxt"></span></div>
+          <div class="bar"><span id="barTiempo" style="width:0%"></span></div>
+          <p class="small" id="tiempoMsg"></p>
+        </div>
+
+        <div id="selTiempo" class="col">
+          <p class="lab" style="margin-top:4px">¿Dónde estás?</p>
+          <div class="chips" id="lugares"></div>
+          <button class="btn line" id="hoyNoPuedo">Hoy no puedo</button>
+        </div>
+
+        <div id="misionCard" class="col" hidden></div>
+
+        <div class="card">
+          <div class="row between"><h3 class="h3">Tu semana</h3><span class="small" id="semanaTxt"></span></div>
+          <div class="week" id="semana"></div>
+          <div class="bar"><span id="barSemana" style="width:0%"></span></div>
+          <p class="small" id="semanaOms"></p>
+        </div>
+
+        <button class="row-btn" id="btnExplorar" data-go="explorar">
+          <span class="ico s" id="icExplorar"></span><span class="grow"><b>Explorar misiones</b><br><span class="small" id="expTxt"></span></span><span id="icChev"></span>
+        </button>
+      </section>
+
+      <!-- EXPLORAR -->
+      <section class="view" data-v="explorar">
+        <div class="row"><button class="btn line sm" data-go="hoy" id="icBack" aria-label="Volver"></button><h2 class="h2">Todas las misiones</h2></div>
+        <p class="small" id="expInfo"></p>
+        <div class="chips" id="fMin"></div>
+        <div class="chips" id="fTipo"></div>
+        <div class="col" id="listaMisiones"></div>
+      </section>
+
+      <!-- CURSO -->
+      <section class="view" data-v="curso">
+        <p class="lab" id="cursoTag">Misión en curso</p>
+        <h2 class="h1" id="cursoNombre"></h2>
+        <div class="ring"><svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="88" fill="none" stroke="var(--track)" stroke-width="12"/><circle id="ringArc" cx="100" cy="100" r="88" fill="none" stroke="var(--brand)" stroke-width="12" stroke-linecap="round" stroke-dasharray="553" stroke-dashoffset="553"/></svg><div class="t" id="reloj">05:00</div></div>
+        <div class="card"><p class="lab">Paso a paso</p><div class="checks" id="cursoPasos"></div></div>
+        <div class="card lila"><div class="row"><span id="icSensor" style="color:var(--lila-ink)"></span><p id="cursoSensor" style="font-size:14px;color:var(--lila-ink)"></p></div></div>
+        <div class="sp"></div>
+        <button class="btn" id="btnTermine">Ya la terminé</button>
+        <button class="btn line" id="btnCancelar">Cancelar</button>
+        <p class="small center" style="text-align:center">Demostración: el cronómetro corre 12 veces más rápido.</p>
+      </section>
+
+      <!-- VALIDAR -->
+      <section class="view" data-v="validar">
+        <h2 class="h1">Comprueba tu misión</h2>
+        <p class="small">No todo se comprueba igual. Esto aplica a <b id="valMision"></b>.</p>
+        <div class="col" id="metodos"></div>
+        <button class="btn line" id="valVolver">Volver</button>
+        <input type="file" id="fotoIn" accept="image/*,video/*" hidden>
+      </section>
+
+      <!-- LOGRO -->
+      <section class="view" data-v="logro">
+        <div class="center col" style="align-items:center;gap:8px;margin-top:4px">
+          <div style="width:78px;height:78px;border-radius:50%;background:var(--brand-soft);color:var(--brand-deep);display:grid;place-items:center" id="logroIco"></div>
+          <h2 class="h1" id="logroTitulo"></h2>
+          <p class="big" id="logroMonedas"></p>
+          <p class="small" id="logroDetalle"></p>
+          <p class="small" id="logroRank" style="font-weight:600"></p>
+        </div>
+        <div class="card mint">
+          <div class="coach"><span class="hx" data-hx></span><div><p class="cname">Hexi</p><p id="logroCoach" style="font-size:14.5px"></p></div></div>
+        </div>
+        <div class="card">
+          <p class="lab">Comprobante por <span id="logroCanal"></span></p>
+          <div class="wa" id="logroChat"></div>
+        </div>
+        <div class="card" id="fbCard">
+          <p style="font-weight:600">¿Cómo se sintió?</p>
+          <div class="seg" id="fb"><button data-f="facil">Fácil</button><button data-f="justa">Justa</button><button data-f="dificil">Difícil</button></div>
+          <p id="fbReply" style="font-size:14.5px" hidden></p>
+        </div>
+        <button class="btn" data-go="ranking">Ver mi ranking</button>
+        <button class="btn line" data-go="hoy">Volver al inicio</button>
+      </section>
+
+      <!-- HEXI -->
+      <section class="view" data-v="hexi">
+        <div class="row"><span class="hx" data-hx></span><div class="grow"><h2 class="h2">Hexi</h2><p class="small">Tu coach. Sabe lo que te gusta y cómo vas.</p></div></div>
+        <div class="chatlog" id="chatlog"></div>
+        <div class="chips" id="quick"></div>
+        <form class="chatbar" id="chatForm" autocomplete="off">
+          <input type="text" id="chatIn" placeholder="Escríbele a Hexi" aria-label="Mensaje para Hexi">
+          <button class="send" type="submit" aria-label="Enviar" id="icSend"></button>
+        </form>
+      </section>
+
+      <!-- GRUPO -->
+      <section class="view" data-v="grupo">
+        <h1 class="h1">Tu grupo</h1>
+        <div class="card mint">
+          <h3 class="h3">Racha en cadena · Oficina piso 4</h3>
+          <p class="small" style="color:var(--brand-deep)">Cuando alguien cumple, le pasa el turno al siguiente. Mantener la cadena viva es más fácil con compañía.</p>
+          <div class="chips" id="cadena"></div>
+          <p class="small" id="cadenaTxt" style="color:var(--brand-deep)"></p>
+        </div>
+        <h2 class="h2">Tabla de la semana entre amigos</h2>
+        <div class="card"><div class="list" id="tabla"></div></div>
+        <h2 class="h2">Cerca de ti</h2>
+        <div class="card"><div class="row"><span class="ico r" data-ic="pin"></span><div class="grow"><b>Trote suave · a 600 m</b><p class="small">Hoy 18:30 · 3 inscritos</p></div></div><button class="btn soft sm" data-unirse="Trote suave">Unirme</button></div>
+        <div class="card"><div class="row"><span class="ico l" data-ic="users"></span><div class="grow"><b>Pausa activa en la oficina</b><p class="small">Mañana 11:00 · tu piso</p></div></div><button class="btn soft sm" data-unirse="Pausa activa">Unirme</button></div>
+      </section>
+
+      <!-- RANKING -->
+      <section class="view" data-v="ranking">
+        <div class="card mint lift">
+          <div class="row between"><p class="lab" style="color:var(--brand-deep)">Tu posición esta semana</p><span class="tag" id="rkTier" style="background:var(--sun);color:var(--sun-ink)"></span></div>
+          <p class="big" id="rkPos">Sin puesto</p>
+          <p class="small" id="rkDe" style="color:var(--brand-deep)"></p>
+          <p class="small" id="rkFalta" style="color:var(--brand-deep);font-weight:600"></p>
+          <p class="small" id="rkCierra" style="color:var(--brand-deep)"></p>
+        </div>
+        <h2 class="h2" id="hPend" hidden>Premios por reclamar</h2>
+        <div class="col" id="porReclamar"></div>
+        <h2 class="h2">Tu premio</h2>
+        <div class="card"><div id="premioAhora"></div></div>
+        <div class="card sun">
+          <div class="row between"><h3 class="h3" style="color:var(--sun-ink)">Pase Hexamove</h3><span class="tag" style="background:var(--surface);color:var(--sun-ink)">$4.990 al mes</span></div>
+          <p class="small" style="color:var(--sun-ink)">Compites igual que todos, pero cada puesto gana un premio mejor.</p>
+          <div id="premioPase"></div>
+          <button class="btn soft sm" id="btnPremium" style="align-self:flex-start"></button>
+        </div>
+        <h2 class="h2">Ranking de la semana</h2>
+        <div class="card"><div class="list" id="rkLista"></div></div>
+        <h2 class="h2">Premios por puesto</h2>
+        <p class="small">El ranking se reinicia cada lunes. Los puntos salen de los minutos comprobados: la comprobación con sensor, reloj o QR da todos los puntos y la foto da la mitad.</p>
+        <div class="col" id="tablaPremios"></div>
+        <h2 class="h2">Mis premios</h2>
+        <p class="small">El premio lo entrega el aliado directo en su local. Muestras el código y listo.</p>
+        <div class="col" id="misCanjes"></div>
+      </section>
+
+      <!-- APTITUD -->
+      <section class="view" data-v="apto">
+        <p class="lab">Evaluación de tu plan</p>
+        <div class="card" id="aptoCard">
+          <h1 class="h1" id="aptoTitulo"></h1>
+          <p class="small" id="aptoSub" style="color:var(--ink)"></p>
+          <div class="col" id="aptoLista" style="gap:10px"></div>
+        </div>
+        <div class="sp"></div>
+        <button class="btn" id="aptoSeguir">Entendido, seguir</button>
+        <button class="btn" id="aptoEditar">Editar mis respuestas</button>
+        <button class="btn soft" id="aptoAut" hidden>Ya tengo autorización médica</button>
+        <p class="small">Esta evaluación usa lo que respondiste sobre tus cuidados y tus bloques libres. No reemplaza la opinión de un profesional de salud.</p>
+      </section>
+
+      <!-- PERFIL -->
+      <section class="view" data-v="perfil">
+        <h1 class="h1" id="perfilNombre">Perfil</h1>
+        <div class="row">
+          <div class="card grow center"><p class="big" id="statMisiones" style="font-size:30px">0</p><p class="small">misiones</p></div>
+          <div class="card grow center"><p class="big" id="statMin" style="font-size:30px">0</p><p class="small">minutos</p></div>
+          <div class="card grow center"><p class="big" id="statComp" style="font-size:30px">0%</p><p class="small">comprobadas</p></div>
+        </div>
+        <div class="card mint">
+          <div class="coach"><span class="hx" data-hx></span><div class="grow"><p class="cname">Lo que Hexi sabe de ti</p><div id="hexiSabe" style="font-size:14px;display:flex;flex-direction:column;gap:6px"></div></div></div>
+          <button class="btn soft sm" id="btnEditar" style="align-self:flex-start">Editar mi plan</button>
+        </div>
+        <div class="card">
+          <h3 class="h3">Tus datos y tu avance</h3>
+          <p class="small" id="syncEstado">Se guardan en este dispositivo.</p>
+          <p class="small">Si no se guardan en la nube del equipo, descarga tus datos y envíaselos al equipo para el análisis.</p>
+          <button class="btn soft sm" id="btnExport" style="align-self:flex-start">Descargar mis datos</button>
+          <div id="exportBox" hidden><p class="small">Copia este texto y envíalo al equipo:</p><textarea id="exportTxt" readonly rows="6" style="width:100%;font-size:12px;border:1.5px solid var(--line);border-radius:12px;padding:8px;background:var(--surface);color:var(--ink)"></textarea></div>
+        </div>
+        <div class="card">
+          <h3 class="h3">Empezar de cero</h3>
+          <p class="small">Borra tu nombre, celular, gustos, misiones y puntos, y vuelves a la bienvenida.</p>
+          <button class="btn line sm" id="btnCero" style="align-self:flex-start">Empezar de cero</button>
+          <div id="ceroConf" hidden>
+            <p class="small" style="margin-bottom:8px;color:var(--danger)"><b>Esto no se puede deshacer.</b></p>
+            <div class="row"><button class="btn sm" id="ceroSi" style="background:var(--danger);color:#fff">Sí, borrar todo</button><button class="btn line sm" id="ceroNo">Cancelar</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="h3">Comodines de racha</h3>
+          <p class="small">Te quedan <b id="comodines">5</b> días libres este mes. Úsalos y no pierdes la racha.</p>
+          <button class="btn soft sm" id="btnComodin" style="align-self:flex-start">Usar un comodín hoy</button>
+        </div>
+        <h2 class="h2">Insignias</h2>
+        <div class="badges" id="insignias"></div>
+        <h2 class="h2">Historial</h2>
+        <div class="col" id="historial"></div>
+        <div class="card" style="border-style:dashed">
+          <p class="lab">Herramientas de demostración</p>
+          <div class="row" style="flex-wrap:wrap">
+            <button class="btn soft sm" id="btnDia">Avanzar un día</button>
+            <button class="btn soft sm" id="btnSeed">Cargar semana de ejemplo</button>
+            <button class="btn soft sm" id="btnSemana">Cerrar la semana</button>
+            <button class="btn line sm" id="btnReset">Reiniciar</button>
+          </div>
+          <p class="small" id="demoDia"></p>
+        </div>
+        <div class="guide">
+    <details>
+      <summary>Cómo se comprueba cada misión</summary>
+      <ul>
+        <li><b>Caminar, trotar, bicicleta.</b> GPS y acelerómetro del celular. Confianza alta, puntos completos.</li>
+        <li><b>Cardio en casa u oficina.</b> Reloj o banda, o sensor del celular. Confianza alta.</li>
+        <li><b>Gimnasio, piscina o clase aliada.</b> Check-in con QR del recinto. Confianza alta.</li>
+        <li><b>Pesas y movilidad.</b> Registro libre: suma racha, sin puntos de ranking. Con reloj sí vale.</li>
+        <li><b>Foto o video.</b> Solo como alternativa: 50 % de los puntos, con tope de 3 por semana.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>Qué incluye este prototipo</summary>
+      <ul>
+        <li>Onboarding con gustos, objetivos, nivel, cuidados y bloques de tiempo ajustables.</li>
+        <li>46 misiones de 5, 10 y 20 minutos, filtradas por gustos, lesiones, lugar y ánimo.</li>
+        <li>Hexi, un coach que recuerda tus gustos y objetivos, revisa tu semana y ajusta la dificultad.</li>
+        <li>Comprobación segmentada, ranking semanal con premios por puesto, Pase premium, rachas, comodines, grupo y evaluación de aptitud.</li>
+      </ul>
+      <p class="small" style="margin-top:8px">No incluye sensores reales ni servidores: el ranking de rivales es simulado. Tus datos se guardan en este dispositivo y, si tienes acceso, en la base del equipo. Hexi responde con un modelo de lenguaje cuando está disponible.</p>
+    </details>
+  </div>
+      </section>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      <div class="overlay" id="overlay"><div class="sheet" id="sheet"></div></div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <div class="navbrand"><svg viewBox="0 0 32 32"><polygon points="16,2 28,9 28,23 16,30 4,23 4,9" fill="var(--brand)"/><path d="M11 12v8M21 12v8M11 16h10" stroke="var(--brand-ink)" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>HEXAMOVE</div>
+      <button data-tab="hoy" id="nHoy"></button>
+      <button data-tab="hexi" id="nHexi"></button>
+      <button data-tab="grupo" id="nGrupo"></button>
+      <button data-tab="ranking" id="nMon"></button>
+      <button data-tab="perfil" id="nPerfil"></button>
+    </nav>
+  </div>
+
+</div>
+<script>
+(function(){
+"use strict";
+/* ============ utilidades ============ */
+var KEY='hexamove-v4';
+function $(id){return document.getElementById(id);}
+function qa(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function pad(n){return (n<10?'0':'')+n;}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+function norm(s){return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+
+var P={
+ home:'M3 11l9-8 9 8M5 10v10h14V10',
+ chat:'M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 1 1 21 12z',
+ users:'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2.5 20c1-3 3.5-4.6 6.5-4.6s5.5 1.6 6.5 4.6M17 10.5a2.4 2.4 0 1 0 0-4.8M17.5 15.6c2 .3 3.4 1.7 4 4',
+ coin:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7.5v9M9.6 10.2h3.8a1.6 1.6 0 0 1 0 3.2h-2.8a1.6 1.6 0 0 0 0 3.2h3.8',
+ user:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 21c1.4-3.8 4-5.5 7-5.5s5.6 1.7 7 5.5',
+ flame:'M12 3c.8 3.5 5.2 5.6 5.2 10.2a5.2 5.2 0 0 1-10.4 0c0-2.2 1-3.4 2.2-4.4 0 2 .9 3.2 2.1 3.2 0-3.2-1.4-5.6.9-9z',
+ check:'M4.5 12.5l5 5L19.5 7',
+ clock:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2',
+ pin:'M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
+ gift:'M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-2-4-6-3-5 0M12 7c2-4 6-3 5 0',
+ leaf:'M5 19c0-9 5-14 15-14 0 10-5 15-14 15M5 19l8-8',
+ bolt:'M13 3L5 13.5h6L10 21l8-10.5h-6z',
+ search:'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4',
+ send:'M21 3L10 14M21 3l-7 18-4-8-8-4z',
+ star:'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.5 2.9 1-6.1L3.2 9.5l6.1-.9z',
+ back:'M15 18l-6-6 6-6',
+ chev:'M9 6l6 6-6 6',
+ heart:'M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z',
+ route:'M6 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM8 17h5a3 3 0 0 0 0-6h-2a3 3 0 0 1 0-6h5',
+ dumb:'M6.5 7v10M17.5 7v10M3.5 10v4M20.5 10v4M6.5 12h11',
+ qr:'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2M14 18h2v2M18 20h2',
+ camera:'M4 8h3l2-3h6l2 3h3v11H4zM12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z',
+ watch:'M8 6l1-3h6l1 3M8 18l1 3h6l1-3M6 8h12v8H6zM12 10.5V12l1.4 1',
+ phone:'M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM11 18h2',
+ pen:'M4 20l4-1 11-11-3-3L5 16zM14 6l3 3',
+ plus:'M12 5v14M5 12h14',
+ chat2:'M4 5h16v11H9l-5 4z',
+ shield:'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'
+};
+function ic(n,c){return '<svg class="i '+(c||'')+'" viewBox="0 0 24 24" aria-hidden="true"><path d="'+(P[n]||P.check)+'"/></svg>';}
+var HEX='<svg viewBox="0 0 32 32" aria-hidden="true"><polygon points="16,2 28,9 28,23 16,30 4,23 4,9" fill="currentColor"/><path d="M11 12v8M21 12v8M11 16h10" stroke="var(--surface)" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>';
+
+/* ============ estado ============ */
+function load(){try{var r=localStorage.getItem(KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+function save(){S.ts=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}if(window.__sync)window.__sync();}
+function blank(){return {onboarded:false,nombre:'',telefono:'',nivel:1,gustos:[],gustosX:[],objetivos:[],objetivosX:[],lesiones:[],lesionesX:[],bloques:[],bloquesX:[],horarios:{},canal:'WhatsApp',
+ comodines:5,premium:false,autorizado:false,eval:null,semanas:[],semIni:null,misiones:[],dias:{},canjes:[],insignias:[],grupoHecho:['Camila'],off:0,ajuste:0,seguidasFacil:0,mood:null,moodDia:null,chat:[],lugar:'cualquiera',editando:false};}
+var S=load()||blank();
+if(S.canal==='Push')S.canal='WhatsApp';
+var base=blank(); Object.keys(base).forEach(function(k){if(S[k]===undefined)S[k]=base[k];});
+
+/* ============ catálogos ============ */
+var GUSTOS=['Caminar','Trotar','Bicicleta','Baile','Yoga','Pilates','Pesas','Boxeo','Natación','Fútbol','Escaleras','Senderismo','Saltar la cuerda','Estiramientos'];
+var OBJ=[{k:'estres',n:'Bajar el estrés'},{k:'energia',n:'Tener más energía'},{k:'salud',n:'Cuidar mi salud'},{k:'peso',n:'Bajar de peso'},{k:'fuerza',n:'Ganar fuerza'},{k:'habito',n:'Crear el hábito'}];
+var BANDERAS=['Problema cardíaco o presión alta','Embarazo','Cirugía reciente','Mareos o dolor de pecho al esforzarme'];
+var BAND_RE=/cardi|coraz|infarto|presion alta|hipertens|embaraz|cirug|operacion|mareo|desmay|dolor de pecho|epilep|convuls/;
+var LESIONES=['Rodilla','Espalda baja','Hombro','Tobillo','Muñeca'].concat(BANDERAS,['Ninguna']);
+function esBandera(l){return BANDERAS.indexOf(l)>=0||BAND_RE.test(norm(l));}
+function banderasUsuario(){return S.lesiones.filter(esBandera);}
+var BLOQUES=['Antes del trabajo','Hora de almuerzo','Pausa de la tarde','Después del trabajo','Fin de semana'];
+var HORAS={'Antes del trabajo':['06:30','08:00'],'Hora de almuerzo':['13:00','14:30'],'Pausa de la tarde':['16:00','17:30'],'Después del trabajo':['18:30','21:00'],'Fin de semana':['10:00','13:00']};
+var LUGARES=[['cualquiera','Cualquiera'],['casa','En casa'],['oficina','En la oficina'],['calle','Afuera'],['gimnasio','Gimnasio']];
+var TIPOS={desplazamiento:{n:'Desplazarse',i:'route'},cardio:{n:'Cardio',i:'heart'},fuerza:{n:'Fuerza',i:'dumb'},movilidad:{n:'Movilidad',i:'leaf'},recinto:{n:'En recinto aliado',i:'pin'}};
+var ZONAS=['rodilla','espalda','hombro','tobillo','muñeca','cuello','cadera'];
+
+/* id, nombre, tipo, min, nivel, gustos, objetivos, evita, lugares, descripción, pasos */
+function M(id,n,t,min,niv,g,o,ev,l,d,p){return {id:id,n:n,t:t,min:min,niv:niv,g:g,o:o,ev:ev,l:l,d:d,p:p};}
+var MISIONES=[
+ M('esc5','Escaleras del edificio','cardio',5,1,['Escaleras'],['energia','peso','habito'],['rodilla'],['oficina','casa'],'Sube y baja a un ritmo cómodo. Si te falta el aire, baja el ritmo.',['Sube dos pisos a ritmo cómodo','Baja caminando','Repite hasta completar el tiempo']),
+ M('man5','Vuelta a la manzana','desplazamiento',5,1,['Caminar'],['estres','habito','energia'],[],['calle'],'Sal a paso ligero y da una vuelta corta. Sin ropa especial.',['Sal y parte a paso ligero','Mantén los hombros sueltos','Vuelve respirando por la nariz']),
+ M('pausa5','Pausa activa de escritorio','movilidad',5,1,['Estiramientos'],['estres','salud'],[],['oficina'],'Se puede hacer con ropa de oficina y sin levantarte mucho.',['Gira el cuello, 5 veces por lado','Sube y baja los hombros','Estira brazos y muñecas']),
+ M('silla5','Sentarse y pararse de la silla','fuerza',5,1,['Pesas'],['fuerza','salud'],['rodilla'],['oficina','casa'],'Fuerza de piernas sin equipo.',['Siéntate con los pies firmes','Párate sin usar las manos','Haz 3 series de 8']),
+ M('pared5','Flexiones de pared','fuerza',5,1,['Pesas'],['fuerza'],['hombro','muñeca'],['oficina','casa'],'Una flexión suave, de pie contra la pared.',['Apoya las manos en la pared','Baja el pecho lento','Haz 3 series de 10']),
+ M('cuerda5','Saltar la cuerda, con o sin cuerda','cardio',5,2,['Saltar la cuerda'],['energia','peso'],['rodilla','tobillo'],['casa','calle'],'Saltitos suaves. Si no tienes cuerda, imita el movimiento.',['Salta con los pies juntos','Aterriza suave en la punta','Descansa 20 segundos cada minuto']),
+ M('baile5','Una canción, un baile','cardio',5,1,['Baile'],['estres','energia','habito'],[],['casa'],'Pon tu canción favorita y muévete sin coreografía.',['Elige la canción','Mueve todo el cuerpo','No pares hasta que termine']),
+ M('cadera5','Movilidad de cadera y espalda','movilidad',5,1,['Yoga','Estiramientos'],['estres','salud'],[],['casa','oficina'],'Suelta la zona que más sufre estando sentado.',['Gira la cadera en círculos','Inclínate al frente, rodillas flexionadas','Abre el pecho y respira profundo']),
+ M('plancha5','Plancha corta','fuerza',5,2,['Pesas','Pilates'],['fuerza'],['hombro','muñeca','espalda'],['casa'],'Cuatro planchas cortas con descanso.',['Apoya antebrazos y puntas','Mantén el cuerpo en línea 20 s','Descansa 20 s y repite 4 veces']),
+ M('boxeo5','Boxeo de sombra','cardio',5,2,['Boxeo'],['estres','energia'],['hombro'],['casa'],'Golpes al aire, ligeros y con ritmo.',['Pies al ancho de hombros','Alterna golpes rectos','Suma esquivas y vuelve a golpear']),
+ M('llam5','Llamada caminando','desplazamiento',5,1,['Caminar'],['estres','habito'],[],['calle','oficina'],'Esa llamada que ibas a hacer sentado, hazla de pie.',['Llama a quien quieras','Camina mientras hablas','Cuenta los minutos de la llamada']),
+ M('cuello5','Cuello y hombros','movilidad',5,1,['Estiramientos'],['estres','salud'],[],['oficina'],'Ideal después de horas frente al computador.',['Inclina la cabeza a un lado 20 s','Cambia de lado','Haz círculos lentos con los hombros']),
+ M('puente5','Puente de glúteos','fuerza',5,1,['Pesas','Pilates'],['fuerza','salud'],[],['casa'],'Activa glúteos y protege la espalda baja.',['Acuéstate con rodillas flexionadas','Sube la cadera apretando glúteos','Baja lento, 3 series de 10']),
+ M('tijera5','Saltos de tijera','cardio',5,2,['Saltar la cuerda','Baile'],['energia','peso'],['rodilla','tobillo'],['casa'],'Cardio rápido para entrar en calor.',['Abre y cierra piernas y brazos','Mantén ritmo parejo','Descansa 15 s cada 45 s']),
+
+ M('parada10','Bájate una parada antes','desplazamiento',10,1,['Caminar'],['habito','salud'],[],['calle'],'En tu vuelta a casa, camina el último tramo.',['Bájate una parada antes','Camina a paso firme','Termina en tu destino']),
+ M('estir10','Estiramiento guiado','movilidad',10,1,['Yoga','Estiramientos'],['estres','salud'],[],['casa','oficina'],'Secuencia suave, ideal después de un día sentado.',['Estira espalda y cuello','Abre cadera y piernas','Cierra con respiración lenta']),
+ M('sol10','Saludo al sol','movilidad',10,2,['Yoga'],['estres','energia'],['muñeca','espalda'],['casa'],'Una secuencia clásica de yoga, a tu ritmo.',['Párate y estira los brazos arriba','Baja a la plancha y sube al perro','Repite 5 vueltas']),
+ M('circ10','Circuito de peso corporal','fuerza',10,2,['Pesas'],['fuerza','peso'],['rodilla','hombro','muñeca'],['casa'],'Sentadillas, zancadas y plancha. Dos vueltas.',['Sentadillas 12','Zancadas 8 por lado','Plancha 30 s y repite']),
+ M('baile10','Tres canciones para bailar','cardio',10,1,['Baile'],['energia','estres'],[],['casa'],'Tres canciones que te gusten, sin coreografía.',['Arma tu lista','Baila las tres seguidas','Estira al final']),
+ M('trote10','Trote y caminata alternados','desplazamiento',10,2,['Trotar'],['peso','energia'],['rodilla','tobillo'],['calle'],'Trota dos minutos, camina uno.',['Trota 2 minutos suaves','Camina 1 minuto','Repite 3 veces']),
+ M('inter10','Intervalos en escaleras','cardio',10,3,['Escaleras','Trotar'],['peso','rendimiento'],['rodilla','tobillo'],['oficina','calle'],'Sube rápido, baja caminando. Cinco repeticiones.',['Calienta caminando 2 min','Sube rápido','Baja caminando y repite']),
+ M('firme10','Caminata a paso firme','desplazamiento',10,1,['Caminar'],['salud','peso'],[],['calle'],'Un paso más rápido que el habitual.',['Camina rápido sin llegar a trotar','Balancea los brazos','Respira parejo']),
+ M('bici10','Pedaleo corto','desplazamiento',10,1,['Bicicleta'],['energia','habito'],[],['calle'],'Diez minutos de bici en vez de transporte o sofá.',['Sal en bici','Pedalea a ritmo cómodo','Vuelve sin apuro']),
+ M('core10','Abdomen y espalda, versión suave','fuerza',10,1,['Pesas','Pilates'],['fuerza','salud'],['espalda'],['casa'],'Core sin cargar la columna.',['Acuéstate con rodillas flexionadas','Eleva una pierna a la vez','Haz 3 series de 8 por lado']),
+ M('rounds10','Rounds de boxeo','cardio',10,2,['Boxeo'],['estres','peso'],['hombro','muñeca'],['casa','gimnasio'],'Tres rounds de golpes con descanso corto.',['Round de 2 min a ritmo suave','Descansa 30 s','Sube el ritmo en los siguientes']),
+ M('inter-c10','Intervalos con cuerda','cardio',10,3,['Saltar la cuerda'],['peso','rendimiento'],['rodilla','tobillo'],['casa','calle'],'Series cortas e intensas.',['Salta 40 s','Descansa 20 s','Repite 8 veces']),
+ M('paseo10','Paseo por el parque','desplazamiento',10,1,['Caminar','Senderismo'],['estres','habito'],[],['calle'],'Camina sin mirar la hora ni el celular.',['Busca un parque o plaza','Camina a ritmo tranquilo','Mira alrededor, no el teléfono']),
+ M('pier10','Piernas: sentadillas y zancadas','fuerza',10,2,['Pesas'],['fuerza','peso'],['rodilla'],['casa'],'Fuerza para escaleras, caminatas y todo lo demás.',['Sentadillas 12','Zancadas 10','Descansa 40 s y repite']),
+ M('col10','Columna sin tensión','movilidad',10,1,['Yoga','Estiramientos'],['estres','salud'],[],['casa','oficina'],'Rotaciones y flexiones suaves de columna.',['Gato y vaca, 8 veces','Rota el torso sentado','Estira piernas al frente']),
+ M('pil10','Pilates básico en el piso','fuerza',10,2,['Pilates'],['fuerza','salud'],['espalda'],['casa'],'Control, respiración y centro del cuerpo.',['Respira y activa el abdomen','Eleva piernas a 90°','Repite lento 3 series']),
+
+ M('barrio20','Caminata por el barrio','desplazamiento',20,1,['Caminar'],['salud','estres','habito'],[],['calle'],'Veinte minutos a paso constante. Puedes cortarla en dos tramos.',['Sal y camina 10 minutos','Da la vuelta','Vuelve a paso tranquilo']),
+ M('trote20','Trote suave','desplazamiento',20,2,['Trotar'],['peso','rendimiento','energia'],['rodilla','tobillo'],['calle'],'Alterna trote y caminata cada tres minutos.',['Calienta caminando 3 min','Trota 3 min, camina 1','Repite hasta el final']),
+ M('bici20','Bicicleta al trabajo o a la vuelta','desplazamiento',20,2,['Bicicleta'],['energia','peso'],[],['calle'],'Un tramo en bici en vez de transporte.',['Revisa frenos y casco','Pedalea a ritmo constante','Cuida el cruce de calles']),
+ M('clase20','Clase en gimnasio aliado','recinto',20,2,['Pesas','Baile','Yoga'],['fuerza','habito'],[],['gimnasio'],'Reserva un cupo en un recinto asociado y haz check-in con el QR.',['Reserva tu cupo','Escanea el QR al entrar','Escanea al salir']),
+ M('nado5','Brazadas en seco','movilidad',5,1,['Natación'],['salud','estres'],['hombro'],['casa','oficina'],'Si no hay piscina a mano, trabaja el movimiento de nado fuera del agua.',['Haz círculos amplios con los brazos hacia adelante','Alterna brazadas lentas, como nadando crol','Termina con pataleo suave acostado o apoyado']),
+ M('nado10','Largos suaves','recinto',10,1,['Natación'],['salud','estres','energia'],[],['gimnasio'],'Diez minutos de piscina en un recinto asociado, a ritmo cómodo.',['Escanea el QR al entrar','Nada largos a ritmo cómodo','Escanea al salir']),
+ M('pel5','Toques y control de balón','cardio',5,1,['Fútbol'],['energia','habito'],['tobillo'],['casa','calle'],'Con un balón, o con un par de calcetines hechos bola.',['Haz toques con el pie sin que caiga','Alterna pie derecho e izquierdo','Descansa cuando lo necesites']),
+ M('pel10','Circuito con balón','cardio',10,2,['Fútbol'],['energia','peso'],['tobillo','rodilla'],['calle','casa'],'Conducción y pases contra una pared, en un espacio libre.',['Conduce el balón en zigzag 2 minutos','Pásalo contra una pared 20 veces','Repite el circuito 2 veces']),
+ M('trote5','Trote corto de activación','desplazamiento',5,1,['Trotar'],['energia','habito'],['rodilla','tobillo'],['calle'],'Un trote muy suave para activar el cuerpo, sin buscar velocidad.',['Camina 1 minuto para entrar en calor','Trota suave 3 minutos','Camina 1 minuto para bajar']),
+ M('bici5','Pedaleo corto','cardio',5,1,['Bicicleta'],['energia','habito'],[],['calle','gimnasio'],'Una vuelta corta en bici o en bicicleta fija, a ritmo cómodo.',['Pedalea 1 minuto suave','Sube un poco la intensidad 3 minutos','Baja el ritmo el último minuto']),
+ M('sen5','Subida corta de sendero','desplazamiento',5,1,['Senderismo'],['salud','estres'],['rodilla'],['calle'],'Un tramo de cerro, plaza con desnivel o sendero cercano.',['Sube a paso firme 2 minutos','Mira alrededor y respira','Baja con calma, cuidando el paso']),
+ M('est20','Sesión larga de estiramientos','movilidad',20,1,['Estiramientos'],['estres','salud'],[],['casa'],'Recorre el cuerpo completo sin apuro.',['Estira cuello y hombros 3 minutos','Estira espalda, caderas y piernas, 30 segundos cada postura','Cierra con respiración lenta 2 minutos']),
+ M('nado20','Nado corto','recinto',20,2,['Natación'],['salud','peso'],[],['gimnasio'],'Veinte minutos de piscina en un recinto asociado.',['Escanea el QR al entrar','Nada a tu ritmo','Escanea al salir']),
+ M('pich20','Pichanga o partido corto','recinto',20,3,['Fútbol'],['energia','rendimiento'],['tobillo','rodilla'],['gimnasio','calle'],'Arma un partido con gente de la app o de tu grupo.',['Reúne a 4 o más personas','Check-in con QR en la cancha','Juega 20 minutos']),
+ M('yoga20','Yoga de 20 minutos','movilidad',20,1,['Yoga'],['estres','salud'],['muñeca'],['casa'],'Secuencia completa, sin apuro.',['Calienta con movilidad','Sostén cada postura 5 respiraciones','Termina con relajación']),
+ M('full20','Fuerza de cuerpo completo','fuerza',20,2,['Pesas'],['fuerza','peso'],['rodilla','hombro','muñeca'],['casa','gimnasio'],'Un circuito con peso corporal o mancuernas livianas.',['Calienta 3 minutos','Circuito de 5 ejercicios','Repite 3 vueltas']),
+ M('hiit20','Intervalos suaves','cardio',20,2,['Saltar la cuerda','Baile'],['peso','energia'],['rodilla','tobillo'],['casa'],'Sube y baja la intensidad cada minuto.',['Calienta 3 min','1 min fuerte, 1 min suave','Repite 7 veces']),
+ M('cerro20','Subida corta al cerro o parque','desplazamiento',20,2,['Senderismo','Caminar'],['salud','estres','energia'],['rodilla'],['calle'],'Una pendiente suave, a tu ritmo.',['Busca una pendiente suave','Sube sin apuro','Baja con cuidado y estira']),
+ M('baile20','Sesión de baile libre','cardio',20,1,['Baile'],['estres','energia'],[],['casa'],'Una playlist completa. Solo muévete.',['Arma tu playlist','Baila sin parar','Cierra con estiramientos']),
+ M('bolsa20','Boxeo en recinto','recinto',20,2,['Boxeo'],['estres','peso'],['muñeca','hombro'],['gimnasio'],'Trabajo en bolsa con recinto aliado.',['Check-in con QR','Rounds de 2 min','Check-in al salir']),
+ M('escs20','Subida de escaleras sostenida','cardio',20,3,['Escaleras'],['peso','rendimiento'],['rodilla'],['oficina','calle'],'Escaleras largas, con pausas cortas.',['Sube a ritmo estable','Baja caminando','Mantén 20 minutos']),
+ M('estat20','Bicicleta estática','recinto',20,1,['Bicicleta'],['peso','salud'],[],['gimnasio'],'Pedaleo constante en un recinto asociado.',['Check-in con QR','Pedalea a ritmo cómodo','Check-in al salir']),
+ M('amigo20','Caminata con alguien','desplazamiento',20,1,['Caminar'],['estres','habito'],[],['calle'],'Invita a alguien. Conversar también cuenta.',['Invita a una persona','Camina a ritmo de conversación','Termina con un café']),
+ M('mixta20','Fuerza y movilidad','fuerza',20,1,['Pesas','Yoga','Pilates'],['salud','fuerza'],[],['casa'],'Mitad fuerza suave, mitad estiramiento.',['10 min de fuerza suave','10 min de estiramiento','Respira profundo al final'])
+];
+var METODOS={
+ desplazamiento:[{id:'sensor',t:'Sensor del celular',d:'GPS y acelerómetro: distancia, pasos y minutos activos.',conf:'alta',f:1,i:'phone'},{id:'foto',t:'Foto o video',d:'Solo si tu celular no registró la actividad.',conf:'media',f:.5,i:'camera'}],
+ cardio:[{id:'reloj',t:'Reloj o banda',d:'Ritmo cardíaco y minutos en zona activa.',conf:'alta',f:1,i:'watch'},{id:'sensor',t:'Sensor del celular',d:'Detecta el movimiento rítmico de la sesión.',conf:'alta',f:1,i:'phone'},{id:'foto',t:'Foto o video',d:'Alternativa si no tienes reloj ni sensor.',conf:'media',f:.5,i:'camera'}],
+ recinto:[{id:'qr',t:'Check-in con QR',d:'Escanea el código del recinto al entrar y al salir.',conf:'alta',f:1,i:'qr'},{id:'foto',t:'Foto o video',d:'Alternativa si el recinto no tiene QR.',conf:'media',f:.5,i:'camera'}],
+ fuerza:[{id:'reloj',t:'Reloj o banda',d:'Si lo tienes, el ritmo cardíaco sí vale.',conf:'alta',f:1,i:'watch'},{id:'foto',t:'Foto o video',d:'Alternativa, con tope semanal.',conf:'media',f:.5,i:'camera'},{id:'libre',t:'Registro libre',d:'No se mide con sensores: suma racha, sin puntos de ranking.',conf:'baja',f:0,i:'pen'}],
+ movilidad:[{id:'foto',t:'Foto o video',d:'Alternativa, con tope semanal.',conf:'media',f:.5,i:'camera'},{id:'libre',t:'Registro libre',d:'Suma racha y progreso, sin puntos de ranking.',conf:'baja',f:0,i:'pen'}]
+};
+var INSIG=[{id:'primera',n:'Primera misión',i:'leaf'},{id:'racha3',n:'3 días seguidos',i:'flame'},{id:'racha7',n:'Una semana',i:'bolt'},{id:'comp5',n:'5 comprobadas',i:'pin'},{id:'canje',n:'Primer premio',i:'gift'},{id:'grupo',n:'Movida grupal',i:'users'},{id:'hexi',n:'Hablaste con Hexi',i:'chat'},{id:'variada',n:'4 tipos distintos',i:'star'}];
+
+/* ============ fechas ============ */
+function ahora(){return new Date(Date.now()+S.off*864e5);}
+function isoD(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function fmt(i){var p=i.split('-');return p[2]+'/'+p[1];}
+function isoOff(n){var d=ahora();d.setDate(d.getDate()+n);return isoD(d);}
+function diasEntre(a,b){return Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5);}
+function racha(){
+  var n=0,i=S.dias[isoOff(0)]?0:-1;
+  while(S.dias[isoOff(i)]){n++;i--;}
+  return n;
+}
+function ultimoDia(){var k=Object.keys(S.dias).sort();return k.length?k[k.length-1]:null;}
+function minSemana(){var lim=isoOff(-6);return S.misiones.filter(function(m){return m.fecha>=lim;}).reduce(function(a,m){return a+m.min;},0);}
+function minSemanaAnt(){var a=isoOff(-13),b=isoOff(-7);return S.misiones.filter(function(m){return m.fecha>=a&&m.fecha<=b;}).reduce(function(a,m){return a+m.min;},0);}
+function franja(h){return h<12?'mañana':(h<18?'tarde':'noche');}
+function mejorFranja(){
+  if(S.misiones.length<3)return null;
+  var c={};S.misiones.forEach(function(m){var f=franja(m.hora);c[f]=(c[f]||0)+1;});
+  var k=Object.keys(c).sort(function(a,b){return c[b]-c[a];});return k[0];
+}
+function tipoFav(){
+  if(S.misiones.length<3)return null;
+  var c={};S.misiones.forEach(function(m){c[m.t]=(c[m.t]||0)+1;});
+  var k=Object.keys(c).sort(function(a,b){return c[b]-c[a];});return k[0];
+}
+function objNombres(){return S.objetivos.map(function(k){var o=OBJ.filter(function(x){return x.n===k;})[0];return o?o.n:k;});}
+function objKeys(){return S.objetivos.map(function(n){var o=OBJ.filter(function(x){return x.n===n;})[0];return o?o.k:null;}).filter(Boolean);}
+function todosGustos(){return S.gustos;}
+function lista(a){if(!a.length)return '';if(a.length===1)return a[0];return a.slice(0,-1).join(', ')+' y '+a[a.length-1];}
+function zonasCuidadas(){
+  var z={};S.lesiones.forEach(function(l){var t=norm(l);ZONAS.forEach(function(zz){if(t.indexOf(norm(zz))>=0)z[zz]=1;});if(t.indexOf('espalda')>=0)z.espalda=1;});
+  return Object.keys(z);
+}
+
+/* ============ UI base ============ */
+var TABS=['hoy','hexi','grupo','ranking','perfil'];
+var views=qa('.view'),nav=$('nav');
+var actual=null,actualRazon='',timer=null,restante=0,total=0,vistaActual='ob0';
+function show(v){
+  if(S.onboarded&&S.eval&&S.eval.estado==='noapto'&&v!=='apto'&&v.indexOf('ob')!==0)v='apto';
+  vistaActual=v;
+  views.forEach(function(s){s.classList.toggle('on',s.dataset.v===v);if(s.dataset.v===v)s.scrollTop=0;});
+  var enTab=TABS.indexOf(v)>=0||['explorar','curso','validar','logro'].indexOf(v)>=0;
+  nav.classList.toggle('on',enTab);
+  qa('button',nav).forEach(function(b){b.classList.toggle('act',b.dataset.tab===v||(v==='explorar'&&b.dataset.tab==='hoy'));});
+  if(v==='hoy')pintarHoy();
+  if(v==='ranking')pintarRanking();
+  if(v==='apto')pintarApto();
+  if(v==='perfil')pintarPerfil();
+  if(v==='grupo')pintarGrupo();
+  if(v==='hexi')pintarChat();
+  if(v==='explorar')pintarExplorar();
+  if(v==='ob5')resumenOb();
+}
+var toastT;
+function toast(m){var t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('on');},3000);}
+function overlay(html,ms,cb){var o=$('overlay');$('sheet').innerHTML=html;o.classList.add('on');setTimeout(function(){o.classList.remove('on');if(cb)cb();},ms);}
+
+/* chips con "Otro" */
+function chips(cont,items,sel,extraKey,onChange,single){
+  cont.innerHTML='';
+  var todos=extraKey?items.concat(S[extraKey]):items;
+  todos.forEach(function(it){
+    var b=document.createElement('button');b.type='button';b.className='chip'+(sel.indexOf(it)>=0?' on':'');b.textContent=it;
+    b.onclick=function(){
+      var i=sel.indexOf(it);
+      if(i>=0)sel.splice(i,1);else sel.push(it);
+      if(it==='Ninguna'&&sel.indexOf('Ninguna')>=0){sel.length=0;sel.push('Ninguna');}
+      else if(it!=='Ninguna'&&sel.indexOf('Ninguna')>=0){sel.splice(sel.indexOf('Ninguna'),1);}
+      save();chips(cont,items,sel,extraKey,onChange);if(onChange)onChange();
+    };
+    cont.appendChild(b);
+  });
+  if(extraKey){
+    var add=document.createElement('button');add.type='button';add.className='chip add';add.innerHTML=ic('plus','s')+' Otro';
+    add.onclick=function(){
+      add.remove();
+      var w=document.createElement('div');w.className='row';w.style.width='100%';
+      var inp=document.createElement('input');inp.type='text';inp.setAttribute('aria-label','Agregar otra opción');
+      inp.placeholder=extraKey==='gustosX'?'Ej: patinar, tenis, cueca':(extraKey==='lesionesX'?'Ej: cuello, cadera':(extraKey==='objetivosX'?'Ej: dormir mejor':'Ej: antes de dormir'));
+      var ok=document.createElement('button');ok.type='button';ok.className='btn sm';ok.style.flex='none';ok.textContent='Agregar';
+      function guardar(){
+        var v=(inp.value||'').trim();
+        if(v){v=cap(v);if(todos.indexOf(v)<0&&S[extraKey].indexOf(v)<0)S[extraKey].push(v);if(sel.indexOf(v)<0)sel.push(v);
+          if(sel.indexOf('Ninguna')>=0&&v!=='Ninguna')sel.splice(sel.indexOf('Ninguna'),1);toast('Agregado: '+v);}
+        save();chips(cont,items,sel,extraKey,onChange);if(onChange)onChange();
+      }
+      ok.onclick=guardar;inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();guardar();}});
+      w.appendChild(inp);w.appendChild(ok);cont.appendChild(w);inp.focus();
+    };
+    cont.appendChild(add);
+  }
+}
+
+/* ============ onboarding ============ */
+function pintarHorarios(){
+  var c=$('horarios');c.innerHTML='';
+  if(!S.bloques.length){c.innerHTML='<p class="small">Elige al menos un bloque para ajustar su horario.</p>';return;}
+  S.bloques.forEach(function(b){
+    if(!S.horarios[b]){var d=HORAS[b]||['18:00','20:00'];S.horarios[b]={d:d[0],h:d[1]};}
+    var card=document.createElement('div');card.className='card';
+    card.innerHTML='<b>'+esc(b)+'</b>';
+    var row=document.createElement('div');row.className='row';
+    var i1=document.createElement('input');i1.type='time';i1.value=S.horarios[b].d;i1.setAttribute('aria-label','Desde, '+b);
+    var sep=document.createElement('span');sep.className='small';sep.textContent='a';
+    var i2=document.createElement('input');i2.type='time';i2.value=S.horarios[b].h;i2.setAttribute('aria-label','Hasta, '+b);
+    var err=document.createElement('p');err.className='err';
+    var ml=document.createElement('p');ml.className='small';ml.style.marginTop='10px';
+    function dur(){var r=S.horarios[b];var m=minVentana(r);ml.textContent=m>0?'Tienes '+m+' minutos en este bloque. Tus misiones se ajustan a ese tiempo.':'';}
+    function upd(){S.horarios[b]={d:i1.value||'18:00',h:i2.value||'20:00'};err.textContent=S.horarios[b].h<=S.horarios[b].d?'La hora de término debe ser posterior al inicio.':'';dur();save();}
+    i1.onchange=upd;i2.onchange=upd;
+    row.appendChild(i1);row.appendChild(sep);row.appendChild(i2);card.appendChild(row);card.appendChild(err);card.appendChild(ml);dur();c.appendChild(card);
+  });
+  save();
+}
+function pintarNivel(){qa('#nivel .row-btn').forEach(function(b){var on=parseInt(b.dataset.val,10)===S.nivel;b.style.borderColor=on?'var(--brand)':'';b.style.background=on?'var(--brand-soft)':'';});}
+qa('#nivel .row-btn').forEach(function(b){b.onclick=function(){S.nivel=parseInt(b.dataset.val,10);save();pintarNivel();};});
+qa('#canal button').forEach(function(b){b.onclick=function(){S.canal=b.dataset.val;qa('#canal button').forEach(function(x){x.classList.toggle('on',x===b);});save();};});
+function resumenOb(){
+  var n=S.nombre;
+  var g=S.gustos.length?lista(S.gustos.slice(0,3).map(function(x){return x.toLowerCase();})):'lo que vayas descubriendo';
+  var o=S.objetivos.length?(' Vamos a ir por '+S.objetivos[0].toLowerCase()+'.'):'';
+  $('resumenOb').textContent='Listo, '+n+'. Armé tu plan alrededor de '+g+' y de tus bloques libres.'+o+' Empezamos suave: lo importante es volver mañana.';
+}
+$('finOb').onclick=function(){
+  if(!S.gustos.length)S.gustos=['Caminar'];
+  S.onboarded=true;S.semIni=S.semIni||lunesDe(isoOff(0));
+  var vuelve=S.editando;S.editando=false;
+  S.eval={estado:evaluar().estado,ts:Date.now()};save();
+  if(vuelve){aptoVuelve='perfil';}
+  else{S.chat=[];aptoVuelve='hoy';}
+  show('apto');
+};
+
+/* ============ misiones: selección ============ */
+function conflicto(m){var z=zonasCuidadas();return m.ev.filter(function(e){return z.indexOf(e)>=0;});}
+function nivelMax(){
+  var n=S.nivel+S.ajuste;
+  if(S.mood==='cansado'||S.mood==='singanas'){n=Math.min(n,1);}
+  if(S.mood==='energia'){n=n+1;}
+  if(banderasUsuario().length)n=Math.min(n,1);
+  return Math.max(1,Math.min(3,n));
+}
+function recientes(k){return S.misiones.slice(0,k).map(function(m){return m.id;});}
+function ultimosTipos(k){return S.misiones.slice(0,k).map(function(m){return m.t;});}
+function matchGusto(m){
+  return m.g.some(function(g){return S.gustos.indexOf(g)>=0;});
+}
+function gustosCat(){return S.gustos.filter(function(g){return GUSTOS.indexOf(g)>=0;});}
+function elegir(min,lugar,evitarId){
+  var nm=nivelMax(),ok=objKeys(),suave=(S.mood==='cansado'||S.mood==='singanas');
+  var gc=gustosCat(),propios=S.gustos.filter(function(g){return GUSTOS.indexOf(g)<0;});
+  /* La actividad que la persona eligió manda: solo se proponen misiones de sus gustos. */
+  function dentroGusto(m){return !gc.length||m.g.some(function(g){return gc.indexOf(g)>=0;});}
+  var base=MISIONES.filter(function(m){return m.id!==evitarId&&dentroGusto(m)&&!conflicto(m).length;});
+  var pool=base.filter(function(m){return m.min===min&&m.niv<=nm&&(!lugar||lugar==='cualquiera'||m.l.indexOf(lugar)>=0);});
+  if(!pool.length)pool=base.filter(function(m){return m.min===min&&m.niv<=nm;});
+  if(!pool.length)pool=base.filter(function(m){return m.min===min;});
+  if(!pool.length)pool=base.filter(function(m){return m.niv<=nm;}).sort(function(a,b){return Math.abs(a.min-min)-Math.abs(b.min-min);}).slice(0,6);
+  /* gustos propios (Otro): misión genérica de esa actividad */
+  var soloPropios=propios.length&&!gc.length;
+  if(propios.length&&(soloPropios||!pool.length||Math.random()<.4)){
+    var g=pick(propios);
+    return {m:{id:'x-'+norm(g)+min,n:g+' · '+min+' minutos',t:'cardio',min:min,niv:S.nivel,g:[g],o:[],ev:[],l:['casa','calle'],d:'La pediste tú: '+min+' minutos de '+g.toLowerCase()+'. Cuenta igual que cualquier otra misión.',p:['Prepara lo que necesites','Hazlo a tu ritmo','Para cuando se cumpla el tiempo']},razon:'Porque dijiste que te gusta '+g.toLowerCase()+'.'};
+  }
+  if(!pool.length)pool=MISIONES.filter(function(m){return m.min===min&&!conflicto(m).length;});
+  if(!pool.length)pool=MISIONES.filter(function(m){return m.min===min;});
+  var rec=recientes(5),tt=ultimosTipos(2);
+  var best=null,bs=-99;
+  pool.forEach(function(m){
+    var s=Math.random()*1.5;
+    if(m.o.some(function(x){return ok.indexOf(x)>=0;}))s+=1.5;
+    if(tt.indexOf(m.t)<0)s+=1.2;
+    if(rec.indexOf(m.id)>=0)s-=4;
+    if(suave&&(m.t==='movilidad'||m.t==='desplazamiento'))s+=2.5;
+    if(S.mood==='energia'&&(m.t==='cardio'||m.niv>=2))s+=1.5;
+    if(s>bs){bs=s;best=m;}
+  });
+  return {m:best,razon:razonDe(best,suave)};
+}
+function razonDe(m,suave){
+  if(suave)return 'Suave a propósito: hoy cuidamos tu energía.';
+  if(S.mood==='energia'&&m.niv>=2)return 'Vienes con energía, así que subí un poco el ritmo.';
+  var g=m.g.filter(function(x){return S.gustos.indexOf(x)>=0;})[0];
+  if(g)return 'La elegí porque te gusta '+g.toLowerCase()+'.';
+  var k=m.o.filter(function(x){return objKeys().indexOf(x)>=0;})[0];
+  if(k){var o=OBJ.filter(function(x){return x.k===k;})[0];return 'Va con tu meta de '+o.n.toLowerCase()+'.';}
+  var z=zonasCuidadas();
+  if(z.length)return 'No carga tu '+z[0]+'.';
+  return 'Para variar un poco.';
+}
+function ptsDe(m,f){return Math.round(m.min*2*f);}
+function ptsM(m){return m.pts!=null?m.pts:(m.monedas||0);}
+function fotosSemana(){var lim=isoOff(-6);return S.misiones.filter(function(m){return m.fecha>=lim&&m.metodoId==='foto'&&ptsM(m)>0;}).length;}
+
+/* ============ HOY ============ */
+function saludoHora(){var h=ahora().getHours();return h<12?'Buenos días':(h<20?'Buenas tardes':'Buenas noches');}
+function coachSaludo(){
+  var n=S.nombre,r=racha(),ud=ultimoDia(),hoy=isoOff(0),obj=S.objetivos[0]?S.objetivos[0].toLowerCase():null;
+  var g=S.gustos[0]?S.gustos[0].toLowerCase():null;
+  if(!S.misiones.length)return saludoHora()+', '+n+'. Hoy no buscamos un récord, solo empezar. Con 5 minutos'+(g?' de '+g:'')+' es suficiente'+(obj?' para ir hacia tu meta de '+obj:'')+'.';
+  var dd=ud?diasEntre(ud,hoy):0;
+  if(dd>=4)return 'Hola, '+n+'. Hace '+dd+' días que no nos vemos y no pasa nada. Lo importante es que volviste. ¿Retomamos con algo de 5 minutos?';
+  if(dd>=2)return saludoHora()+', '+n+'. Te eché de menos estos días. Sin reproches: un paso corto hoy y la racha vuelve a andar.';
+  if(S.dias[hoy])return 'Ya cumpliste hoy, '+n+'. Descansa tranquilo, o suma otra misión corta si te quedaron ganas.';
+  if(r>=7)return saludoHora()+', '+n+'. Llevas '+r+' días seguidos. Eso ya es hábito, y lo hiciste con tiempo que no tenías.';
+  if(r>=3)return saludoHora()+', '+n+'. '+r+' días seguidos. Hoy toca cuidar la racha, y ya armé una misión para tu tiempo libre.';
+  var mf=mejorFranja();
+  if(mf)return saludoHora()+', '+n+'. Me fijé que cumples más en la '+mf+'. Si hoy se puede, aprovecha ese momento.';
+  return saludoHora()+', '+n+'. Ayer cumpliste y eso pesa. Te dejé una misión según el tiempo que me dijiste.';
+}
+function pintarHoy(){
+  var dias=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  $('saludoDia').textContent=dias[ahora().getDay()];
+  $('saludo').textContent='Hola, '+S.nombre;
+  var r=racha();
+  $('rachaBox').innerHTML=ic('flame','s')+'<span>'+r+(r===1?' día':' días')+'</span>';
+  $('coachMsg').textContent=coachSaludo();
+  var hoyMood=S.moodDia===isoOff(0);
+  $('moodBox').hidden=hoyMood;
+  $('moodReply').hidden=!hoyMood;
+  if(hoyMood)$('moodReply').textContent=moodRespuesta(S.mood);
+  var mo=$('moods');mo.innerHTML='';
+  [['energia','Con energía'],['normal','Normal'],['cansado','Cansado'],['singanas','Sin ganas']].forEach(function(x){
+    var b=document.createElement('button');b.type='button';b.className='chip'+(S.mood===x[0]&&hoyMood?' on':'');b.textContent=x[1];
+    b.onclick=function(){S.mood=x[0];S.moodDia=isoOff(0);save();pintarHoy();};mo.appendChild(b);
+  });
+  var bl=S.bloques[0]||'Después del trabajo',rg=S.horarios[bl]||{d:'18:30',h:'21:00'};
+  $('avisoIco').innerHTML=ic('chat2');
+  $('avisoCanal').textContent=S.canal+(S.telefono?' al '+telFmt():'')+' · '+horaAzar(rg)+' · '+bl.toLowerCase();
+  $('avisoTexto').textContent=S.nombre+', tienes un rato libre. ¿Hacemos tu misión de hoy?';
+  var tot=totalHoy(),hec=Math.min(hechoHoy(),tot),rest=restanteHoy();
+  $('tiempoTxt').textContent=hec+' de '+tot+' min';
+  $('barTiempo').style.width=(tot?Math.round(hec/tot*100):0)+'%';
+  $('tiempoMsg').textContent=rest>=5?'Te quedan '+rest+' minutos libres hoy. Cada misión que hagas se descuenta de ahí.':'Completaste los '+tot+' minutos que tenías libres hoy. Buen trabajo, nos vemos mañana.';
+  var lu=$('lugares');lu.innerHTML='';
+  LUGARES.forEach(function(x){
+    var b=document.createElement('button');b.type='button';b.className='chip'+(S.lugar===x[0]?' on':'');b.textContent=x[1];
+    b.onclick=function(){S.lugar=x[0];save();if(actual&&!$('misionCard').hidden){var e=elegir(actual.min,S.lugar,actual.id);mostrarMision(e.m,e.razon);}else pintarHoy();};lu.appendChild(b);
+  });
+  var ms=minSemana(),pct=Math.min(100,Math.round(ms/150*100));
+  $('barSemana').style.width=pct+'%';
+  $('semanaOms').textContent=ms+' de 150 min que recomienda la OMS';
+  var ant=minSemanaAnt();
+  $('semanaTxt').textContent=ms>ant&&ant>0?'más que la semana pasada':'';
+  var w=$('semana');w.innerHTML='';var ini=['D','L','M','M','J','V','S'];
+  for(var i=-6;i<=0;i++){
+    var iso=isoOff(i),d=new Date(iso+'T12:00:00'),st=S.dias[iso];
+    var el=document.createElement('div');el.className='day'+(st?' '+st:'')+(i===0?' hoy':'');
+    el.innerHTML='<span class="dot">'+ic('check','s')+'</span><span>'+ini[d.getDay()]+'</span>';w.appendChild(el);
+  }
+  $('icExplorar').innerHTML=ic('search');$('icChev').innerHTML=ic('chev','s');
+  $('expTxt').textContent=MISIONES.length+' misiones, ajustadas a tus gustos y cuidados';
+  if(actual){mostrarMision(actual,actualRazon,true);}
+  else if(restanteHoy()>=5){var e0=elegir(minBloque(),S.lugar);mostrarMision(e0.m,e0.razon);}
+  else{$('selTiempo').hidden=true;$('misionCard').hidden=true;}
+}
+function minVentana(r){function mm(t){var q=(t||'0:0').split(':');return parseInt(q[0],10)*60+parseInt(q[1],10);}return r?mm(r.h)-mm(r.d):0;}
+function bloquesHoy(){var fs=[0,6].indexOf(ahora().getDay())>=0;var l=S.bloques.filter(function(b){return (b==='Fin de semana')===fs;});return l.length?l:S.bloques;}
+function totalHoy(){var t=0;bloquesHoy().forEach(function(b){t+=Math.max(0,minVentana(S.horarios[b]));});return Math.floor(t/5)*5;}
+function hechoHoy(){var d=isoOff(0);return S.misiones.filter(function(m){return m.fecha===d;}).reduce(function(a,m){return a+m.min;},0);}
+function restanteHoy(){return Math.max(0,totalHoy()-hechoHoy());}
+function duracionMision(m){return m>=20?20:(m>=10?10:(m>=5?5:0));}
+function minBloque(){return duracionMision(restanteHoy());}
+function horaAzar(r){
+  function mm(t){var p=(t||'18:00').split(':');return parseInt(p[0],10)*60+parseInt(p[1],10);}
+  var a=mm(r.d),b=mm(r.h);if(b<=a)b=a+60;
+  if(!horaAzar.c)horaAzar.c={};var k=r.d+r.h;
+  if(horaAzar.c[k]===undefined)horaAzar.c[k]=a+Math.floor(Math.random()*(b-a));
+  var m=horaAzar.c[k];return pad(Math.floor(m/60))+':'+pad(m%60);
+}
+function moodRespuesta(k){
+  var n=S.nombre;
+  if(k==='energia')return 'Qué bueno, '+n+'. Aprovechemos esa energía: te voy a proponer algo con un poco más de ritmo.';
+  if(k==='cansado')return 'Gracias por contármelo, '+n+'. Hoy cuidamos la energía: algo suave y corto cuenta exactamente igual.';
+  if(k==='singanas')return 'Está bien, '+n+'. A veces lo único que hay que hacer es empezar 5 minutos. Si después quieres parar, paras y cuenta igual.';
+  return 'Perfecto, '+n+'. Seguimos con tu plan de siempre.';
+}
+function mostrarMision(m,razon,sinReset){
+  actual=m;actualRazon=razon||'';
+  $('selTiempo').hidden=true;
+  var c=$('misionCard');c.hidden=false;
+  var ti=TIPOS[m.t];
+  c.innerHTML=
+   '<div class="card lift">'+
+     '<div class="row between"><span class="tag lil">'+ic('clock','s')+m.min+' minutos</span><span class="tag">'+ti.n+'</span></div>'+
+     '<h2 class="h1" style="font-size:24px">'+esc(m.n)+'</h2>'+
+     '<p class="small">'+esc(m.d)+'</p>'+
+     (razon?'<div class="row" style="background:var(--brand-soft);color:var(--brand-deep);border-radius:12px;padding:8px 10px;font-size:13.5px;gap:8px"><span class="hx s">'+HEX+'</span><span>'+esc(razon)+'</span></div>':'')+
+     '<div class="checks" style="margin-top:2px">'+m.p.map(function(x,i){return '<div class="chk"><span class="b" style="color:var(--muted);font-size:11px;font-weight:700">'+(i+1)+'</span><span>'+esc(x)+'</span></div>';}).join('')+'</div>'+
+     '<p class="small"><b>Se comprueba con:</b> '+METODOS[m.t].map(function(x){return x.t.toLowerCase();}).join(', ')+'</p>'+
+     '<div class="row"><span class="coin">H</span><b>hasta +'+ptsDe(m,Math.max.apply(null,METODOS[m.t].map(function(x){return x.f;})))+' puntos de ranking</b></div>'+
+   '</div>'+
+   '<button class="btn" id="btnEmpezar">Empezar misión</button>'+
+   '<div class="row"><button class="btn line" id="btnOtra">Dame otra</button><button class="btn line" id="btnCambiar">Cambiar tiempo</button></div>';
+  $('btnEmpezar').onclick=empezar;
+  $('btnOtra').onclick=function(){var e=elegir(actual.min,S.lugar,actual.id);mostrarMision(e.m,e.razon);};
+  $('btnCambiar').onclick=function(){actual=null;pintarHoy();};
+  if(!sinReset){var vw=$('misionCard').closest('.view');vw.scrollTo({top:Math.max(0,$('misionCard').offsetTop-12),behavior:'smooth'});}
+}
+$('hoyNoPuedo').onclick=function(){
+  var u=S.nombre;toast('Sin problema, '+u+'. Mañana te escribo de nuevo en tu bloque libre.');
+  addChat('h','Hoy no pudiste y está bien, '+u+'. Los días imposibles existen; lo que cuenta es volver. Si quieres, usa un comodín en tu perfil para cuidar la racha.');
+};
+
+/* ============ misión en curso ============ */
+function empezar(){
+  if(!actual)return;
+  total=actual.min*60;restante=total;
+  $('cursoNombre').textContent=actual.n;
+  $('cursoTag').textContent='Misión de '+actual.min+' minutos';
+  var sensor=(actual.t==='desplazamiento'||actual.t==='cardio');
+  $('icSensor').innerHTML=ic(sensor?'phone':(actual.t==='recinto'?'qr':'pen'));
+  show('curso');tick();clearInterval(timer);
+  timer=setInterval(function(){restante-=12;if(restante<=0){restante=0;clearInterval(timer);toast('Tiempo cumplido. Ya puedes comprobarla.');}tick();},1000);
+}
+function tick(){
+  var mm=Math.floor(restante/60),ss=restante%60;
+  $('reloj').textContent=pad(mm)+':'+pad(ss);
+  var prog=total?1-restante/total:0;
+  $('ringArc').style.strokeDashoffset=String(553*(1-prog));
+  var n=actual.p.length,idx=Math.min(n-1,Math.floor(prog*n)),fin=restante===0;
+  $('cursoPasos').innerHTML=actual.p.map(function(x,i){
+    var cl=(fin||i<idx)?'done':(i===idx?'now':'');
+    return '<div class="chk '+cl+'"><span class="b">'+(cl==='done'?ic('check','s'):'')+'</span><span>'+esc(x)+'</span></div>';
+  }).join('');
+  var el=total-restante;
+  var txt;
+  if(actual.t==='desplazamiento')txt='Sensor activo: '+Math.round(el*1.7)+' pasos · '+(el/60).toFixed(1)+' min en movimiento';
+  else if(actual.t==='cardio')txt='Sensor activo: ritmo estable detectado · '+(el/60).toFixed(1)+' min activos';
+  else if(actual.t==='recinto')txt='Tu check-in en el recinto está registrado. Falta el de salida.';
+  else txt='Esta misión no se mide con sensores. Al terminar la registras tú.';
+  $('cursoSensor').textContent=txt;
+}
+$('btnCancelar').onclick=function(){clearInterval(timer);show('hoy');};
+$('btnTermine').onclick=function(){clearInterval(timer);pintarValidar();show('validar');};
+$('valVolver').onclick=function(){show('curso');tick();timer=setInterval(function(){restante-=12;if(restante<=0){restante=0;clearInterval(timer);}tick();},1000);};
+
+/* ============ comprobación ============ */
+var metodoPend=null;
+function pintarValidar(){
+  $('valMision').textContent=actual.n.toLowerCase();
+  var c=$('metodos');c.innerHTML='';
+  METODOS[actual.t].forEach(function(mt){
+    var f=mt.f;if(mt.id==='foto'&&fotosSemana()>=3)f=0;
+    var mon=ptsDe(actual,f);
+    var d=document.createElement('div');d.className='card';
+    d.innerHTML='<div class="row"><span class="ico '+(mt.conf==='alta'?'':'l')+'">'+ic(mt.i)+'</span><div class="grow"><b>'+mt.t+'</b><p class="small">'+mt.d+'</p></div><span class="tag '+mt.conf+'">'+mt.conf+'</span></div>'+
+     '<p class="small"><b style="color:var(--ink)">'+(mon>0?'+'+mon+' puntos':'Suma racha, sin puntos')+'</b>'+(mt.id==='foto'&&f===0?' · Ya usaste las 3 fotos de la semana.':'')+'</p>';
+    var b=document.createElement('button');b.className='btn '+(mt.f===1?'':'soft');
+    b.textContent=mt.id==='qr'?'Escanear QR del recinto':(mt.id==='foto'?'Subir foto o video':(mt.id==='libre'?'Registrar sin comprobar':'Comprobar con '+mt.t.toLowerCase()));
+    b.onclick=function(){comprobar(mt,f);};
+    d.appendChild(b);c.appendChild(d);
+  });
+}
+function comprobar(mt,f){
+  if(mt.id==='foto'){metodoPend={mt:mt,f:f};$('fotoIn').value='';$('fotoIn').click();return;}
+  if(mt.id==='libre'){completar(mt,f);return;}
+  var tx={qr:['<div class="scan">'+ic('qr','l')+'</div>','Escaneando el código del recinto'],sensor:['<div class="spin"></div>','Leyendo los datos de tu celular'],reloj:['<div class="spin"></div>','Sincronizando con tu reloj']}[mt.id];
+  overlay(tx[0]+'<b>'+tx[1]+'</b><p class="small">Un momento…</p>',1500,function(){completar(mt,f);});
+}
+$('fotoIn').addEventListener('change',function(){
+  if(!this.files||!this.files.length||!metodoPend)return;
+  var p=metodoPend;metodoPend=null;
+  overlay('<div class="spin"></div><b>Revisando tu evidencia</b><p class="small">Un momento…</p>',1300,function(){completar(p.mt,p.f);});
+});
+
+/* ============ completar misión ============ */
+var ultimaM=null;
+function completar(mt,f){
+  var mon=ptsDe(actual,f),hoy=isoOff(0),h=ahora().getHours();
+  var primeraHoy=!S.dias[hoy];
+  S.dias[hoy]='m';
+  var rec={id:actual.id,n:actual.n,t:actual.t,min:actual.min,metodo:mt.t,metodoId:mt.id,conf:mt.conf,pts:mon,fecha:hoy,hora:h,sent:null,mood:(S.moodDia===hoy?S.mood:null)};
+  S.misiones.unshift(rec);ultimaM=rec;
+  dar('primera');var r=racha();
+  if(r>=3)dar('racha3');if(r>=7)dar('racha7');
+  if(S.misiones.filter(function(x){return x.conf==='alta';}).length>=5)dar('comp5');
+  var tipos={};S.misiones.forEach(function(x){tipos[x.t]=1;});if(Object.keys(tipos).length>=4)dar('variada');
+  if(S.grupoHecho.indexOf(S.nombre)<0)S.grupoHecho.push(S.nombre);
+  save();
+  $('logroIco').innerHTML=ic(mon>0?'check':'pen','l');
+  $('logroTitulo').textContent=mt.f>0?'Misión comprobada':'Misión registrada';
+  $('logroMonedas').textContent=mon>0?'+'+mon:'Racha +1';
+  $('logroDetalle').textContent=mon>0?'puntos de ranking · racha de '+r+(r===1?' día':' días'):'tu racha sigue viva ('+r+(r===1?' día':' días')+'), sin puntos de ranking';
+  var rk=rankInfo();$('logroRank').textContent=rk.pos?'Vas #'+rk.pos+' de '+rk.n+' en el ranking de la semana.':'';
+  $('logroCoach').textContent=mensajeLogro(actual,mt,r);
+  $('logroCanal').textContent=S.canal+(S.telefono?' al '+telFmt():'');
+  $('logroChat').innerHTML='<b>Hexamove</b><br>'+(mon>0?'Misión comprobada con '+esc(mt.t.toLowerCase())+': '+esc(actual.n)+'. Sumaste '+mon+' puntos al ranking. Este mensaje es tu comprobante al reclamar tu premio.':'Registramos: '+esc(actual.n)+'. No suma puntos de ranking, pero tu racha sigue.');
+  $('fbReply').hidden=true;qa('#fb button').forEach(function(b){b.classList.remove('on');});
+  actual=null;
+  show('logro');
+}
+function dar(id){if(S.insignias.indexOf(id)<0){S.insignias.push(id);var i=INSIG.filter(function(x){return x.id===id;})[0];if(i)setTimeout(function(){toast('Insignia desbloqueada: '+i.n);},900);}}
+
+/* ============ Hexi: mensajes ============ */
+function mensajeLogro(m,mt,r){
+  var n=S.nombre,h=ahora().getHours(),pool=[],hechas=S.misiones.length;
+  var obj=S.objetivos[0]?S.objetivos[0].toLowerCase():null;
+  var gustado=m.g.filter(function(x){return S.gustos.indexOf(x)>=0;})[0];
+  var z=zonasCuidadas();
+  if(hechas<=1){pool.push('La primera siempre es la más difícil, '+n+', y ya la hiciste. Mañana no partes de cero.');pool.push('Listo, '+n+'. Lo que acabas de hacer es lo que casi todos postergan para el lunes.');}
+  if(S.mood==='cansado'||S.mood==='singanas'){pool.push('Me dijiste que venías '+(S.mood==='cansado'?'cansado':'sin ganas')+' y aun así lo hiciste. Eso vale más que una sesión perfecta con energía.');}
+  if(h>=19){pool.push('Después de una jornada completa igual te moviste, '+n+'. Eso no es disciplina de manual, es mérito tuyo.');}
+  else if(h<12){pool.push('Empezaste el día moviéndote. El resto de la jornada parte distinto.');}
+  else{pool.push('Te hiciste un espacio en medio del día. Ese es justo el hábito que queríamos construir.');}
+  if(m.min<=5)pool.push('Cinco minutos no cambian tu cuerpo, pero sí tu día. Y los días son lo que se suma.');
+  if(m.min>=20)pool.push(m.min+' minutos, '+n+'. Hace unas semanas calzar eso te habría parecido imposible.');
+  if(r>=7)pool.push('Una semana seguida. Ya no es motivación: esto se está volviendo rutina tuya.');
+  else if(r>=3)pool.push(r+' días seguidos. Lo valioso no es lo de hoy, es que volviste.');
+  else if(r===2)pool.push('Dos días seguidos. El segundo siempre vale más que el primero.');
+  if(gustado&&hechas>1)pool.push('Y lo hiciste con algo que te gusta, '+gustado.toLowerCase()+'. Así el hábito pesa menos.');
+  if(obj)pool.push('Esto suma directo a tu meta de '+obj+'. No se nota de un día para otro, pero se acumula.');
+  if(z.length)pool.push('Elegí algo que no cargara tu '+z[0]+'. Cuidarte también es parte del plan.');
+  if(mt.f===0)pool.push('Esta la registraste tú, y confío en tu palabra: el progreso es tuyo, no mío.');
+  if(mt.id==='qr')pool.push('Llegaste hasta el recinto y entraste. Esa parte es la que más cuesta.');
+  var ms=minSemana();if(ms>=60&&ms<150)pool.push('Ya llevas '+ms+' minutos esta semana. Vas camino a los 150 que recomienda la OMS.');
+  if(ms>=150)pool.push('Pasaste los 150 minutos de la semana, '+n+'. Lo que la OMS recomienda, tú lo hiciste.');
+  var a=minSemanaAnt();if(a>0&&ms>a)pool.push('Esta semana ya te moviste más que la anterior. Se nota el avance.');
+  return pick(pool);
+}
+qa('#fb button').forEach(function(b){b.onclick=function(){
+  if(!ultimaM)return;var f=b.dataset.f,n=S.nombre,t;
+  qa('#fb button').forEach(function(x){x.classList.toggle('on',x===b);});
+  ultimaM.sent=f;
+  if(f==='dificil'){S.ajuste=-1;S.seguidasFacil=0;t='Gracias por decirme, '+n+'. La próxima la bajo un poco. Si te cuesta, el plan está mal ajustado, no tú.';}
+  else if(f==='facil'){S.seguidasFacil++;if(S.seguidasFacil>=2){S.ajuste=Math.min(1,S.ajuste+1);S.seguidasFacil=0;t='Dos seguidas que se te hicieron fáciles. Voy a subir un poco la exigencia, y me dices si es mucho.';}else{t='Perfecto, '+n+'. Si te sigue pareciendo fácil, subo el nivel.';}}
+  else{S.seguidasFacil=0;S.ajuste=Math.max(S.ajuste,0);t='Justo en el punto. Seguimos así, '+n+'.';}
+  save();$('fbReply').textContent=t;$('fbReply').hidden=false;
+};});
+
+/* ============ chat con Hexi ============ */
+var chatBusy=false;
+function addChat(de,t,act){S.chat.push({de:de,t:t,act:act||null});if(S.chat.length>40)S.chat.shift();save();if(vistaActual==='hexi')pintarChat();}
+function resumenSemana(){
+  var n=S.nombre,ms=minSemana(),ant=minSemanaAnt(),k=S.misiones.filter(function(m){return m.fecha>=isoOff(-6);}).length,r=racha();
+  if(!S.misiones.length)return 'Todavía no tenemos misiones hechas, '+n+'. Con una de 5 minutos ya tendría algo que contarte.';
+  var t='Esta semana llevas '+k+(k===1?' misión':' misiones')+' y '+ms+' minutos. ';
+  if(ant>0)t+=(ms>=ant?'Es más que la semana pasada. ':'Fue una semana más tranquila que la anterior, y está bien. ');
+  var mf=mejorFranja(),tf=tipoFav();
+  if(mf)t+='Cumples más en la '+mf+'. ';
+  if(tf)t+='Lo que más haces es '+TIPOS[tf].n.toLowerCase()+'. ';
+  t+=r>0?'Tu racha va en '+r+(r===1?' día.':' días.'):'Hoy es buen día para retomar la racha.';
+  return t;
+}
+function responder(txt){
+  var t=norm(txt),n=S.nombre;
+  if(/dolor|duele|lesion|molest|contractur|pinch/.test(t)){
+    var z=ZONAS.filter(function(zz){return t.indexOf(norm(zz))>=0;});
+    if(t.indexOf('espalda')>=0&&z.indexOf('espalda')<0)z.push('espalda');
+    if(z.length){z.forEach(function(zz){var L=cap(zz==='espalda'?'Espalda baja':zz);if(S.lesiones.indexOf(L)<0&&S.lesionesX.indexOf(L)<0){if(LESIONES.indexOf(L)>=0){S.lesiones.push(L);}else{S.lesionesX.push(L);S.lesiones.push(L);}}});
+      S.lesiones=S.lesiones.filter(function(x){return x!=='Ninguna';});save();
+      return {t:'Lamento que te moleste, '+n+'. Si hay dolor, para y descansa. Anoté tu '+z[0]+' y desde ahora no te propongo ejercicios que la carguen. No reemplazo a un médico: si no se pasa en unos días, consúltalo.'};}
+    return {t:'Lamento que te moleste algo, '+n+'. ¿En qué zona es? Así evito ejercicios que la carguen. Y si el dolor es fuerte o no se pasa, mejor que lo vea un médico.'};
+  }
+  if(/cansad|agotad|sueno|dormi|sin energia/.test(t))return {t:'Te entiendo, '+n+'. Un día cansado no es un día perdido. Hoy te propongo algo suave y corto: movilidad o una caminata de 5 minutos. Cuenta igual.',act:{l:'Pedir misión suave',a:'suave'}};
+  if(/tiempo|ocupad|reunion|trabajo|no puedo/.test(t))return {t:'Lo sé, '+n+'. Por eso existen los 5 minutos. No hace falta cambiarte de ropa ni salir: una pausa activa en tu escritorio ya cuenta.',act:{l:'Misión de 5 minutos',a:'5'}};
+  if(/motiv|ganas|flojo|pereza|desanim|animo/.test(t)){
+    var o=S.objetivos[0]?S.objetivos[0].toLowerCase():null,r=racha();
+    return {t:(r>0?'Llevas '+r+(r===1?' día':' días')+' de racha, '+n+'. ':'Todos partimos así, '+n+'. ')+(o?'Dijiste que querías '+o+'. ':'')+'No necesitas ganas, necesitas empezar 5 minutos. Las ganas suelen aparecer en el minuto dos.',act:{l:'Empezar con 5 minutos',a:'5'}};}
+  if(/como voy|progreso|avance|resumen|semana/.test(t))return {t:resumenSemana()};
+  if(/recomi|mision|que hago|que hacemos|sugier/.test(t)){
+    var e=elegir(10,'cualquiera');return {t:'Para hoy te sugiero "'+e.m.n+'" ('+e.m.min+' min). '+e.razon,act:{l:'Ver esta misión',a:'m:'+e.m.id}};}
+  if(/gracias/.test(t))return {t:'Para eso estoy, '+n+'. Me alegra acompañarte.'};
+  if(/hola|buenas|hey/.test(t))return {t:saludoHora()+', '+n+'. ¿Cómo estás hoy? Cuéntame y vemos qué te conviene.'};
+  if(/gusta|prefer|aburr|distint|variar|otra cosa/.test(t))return {t:'Te propongo variar. Sé que te gusta '+lista(S.gustos.slice(0,3).map(function(x){return x.toLowerCase();}))+', pero también puedo mezclar algo nuevo. Dime qué quieres probar.',act:{l:'Explorar misiones',a:'explorar'}};
+  return {t:'Te escucho, '+n+'. Puedo ayudarte a elegir una misión, ajustar la dificultad, resumir tu semana o simplemente acompañarte. ¿Qué necesitas hoy?'};
+}
+function accionChat(a){
+  if((a==='5'||a==='suave')&&restanteHoy()<5){show('hoy');toast('Ya completaste tu tiempo libre de hoy.');return;}
+  if(a==='5'){var e=elegir(5,S.lugar);show('hoy');mostrarMision(e.m,e.razon);}
+  else if(a==='suave'){S.mood='cansado';S.moodDia=isoOff(0);save();var e2=elegir(5,S.lugar);show('hoy');mostrarMision(e2.m,e2.razon);}
+  else if(a==='explorar'){show('explorar');}
+  else if(a.indexOf('m:')===0){var id=a.slice(2),m=MISIONES.filter(function(x){return x.id===id;})[0];if(m){show('hoy');mostrarMision(m,razonDe(m,false));}}
+}
+function pintarChat(){
+  if(!S.chat.length){
+    S.chat.push({de:'h',t:'Hola, '+S.nombre+'. Soy Hexi. Me acuerdo de lo que me contaste: '+(S.gustos.length?'te gusta '+lista(S.gustos.slice(0,3).map(function(x){return x.toLowerCase();}))+'. ':'')+(S.objetivos.length?'Tu meta es '+S.objetivos[0].toLowerCase()+'. ':'')+'Cuéntame cómo vas cuando quieras.'});
+    save();
+  }
+  var c=$('chatlog');c.innerHTML='';
+  S.chat.forEach(function(m,i){
+    var d=document.createElement('div');
+    if(m.de==='h'){d.className='coach';d.innerHTML='<span class="hx">'+HEX+'</span><div class="bubble"><p class="cname">Hexi</p><p>'+esc(m.t)+'</p></div>';
+      if(m.act){var b=document.createElement('button');b.className='btn soft sm act';b.textContent=m.act.l;b.onclick=function(){accionChat(m.act.a);};d.querySelector('.bubble').appendChild(b);}}
+    else{d.style.display='flex';d.style.justifyContent='flex-end';d.innerHTML='<div class="bubble me">'+esc(m.t)+'</div>';}
+    c.appendChild(d);
+  });
+  if(chatBusy){var t=document.createElement('div');t.className='coach';
+    if(streamTxt){t.innerHTML='<span class="hx">'+HEX+'</span><div class="bubble"><p class="cname">Hexi</p><p>'+esc(streamTxt)+'</p></div>';}
+    else{t.innerHTML='<span class="hx">'+HEX+'</span><div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div>';}
+    if(ctl){var sb=document.createElement('button');sb.type='button';sb.className='btn soft sm act';sb.textContent='Detener';sb.onclick=function(){if(ctl)ctl.abort();};t.querySelector('.bubble').appendChild(sb);}
+    c.appendChild(t);}
+  var q=$('quick');q.innerHTML='';
+  ['Estoy cansado','No tengo tiempo','¿Cómo voy?','Recomiéndame algo','Necesito motivación','Me duele la rodilla'].forEach(function(x){
+    var b=document.createElement('button');b.type='button';b.className='chip';b.textContent=x;b.onclick=function(){enviar(x);};q.appendChild(b);
+  });
+  var v=$('chatlog').parentNode;setTimeout(function(){v.scrollTop=v.scrollHeight;},30);
+}
+var sampleFn=null,sampleOff=false,ctl=null,streamTxt='';
+try{if(window.claude&&claude.use){claude.use('sample').then(function(f){sampleFn=f||null;}).catch(function(){sampleFn=null;});}}catch(e){}
+function contextoHexi(){
+  var z=zonasCuidadas(),r=racha(),mf=mejorFranja(),tf=tipoFav();
+  var ult=S.misiones.slice(-5).map(function(m){return m.n+' ('+m.min+' min, '+fmt(m.fecha)+')';});
+  var gc=gustosCat();var cat=MISIONES.filter(function(m){return !gc.length||m.g.some(function(g){return gc.indexOf(g)>=0;});}).map(function(m){return m.id+'='+m.n+' ('+m.min+'min)';}).join('; ');
+  return 'Eres Hexi, el coach de Hexamove, una app chilena que ayuda a las personas con poco tiempo a mantenerse activas con misiones de movimiento de 5 a 20 minutos que caben en su día. '+
+  'Tu rol: orientar y ayudar a la persona (proponer misiones, adaptar la dificultad, motivar sin presionar, resumir su progreso, cuidar su seguridad). '+
+  'Conversas como un asistente de IA moderno: respondes de verdad a lo que la persona escribe, con naturalidad, en español chileno neutro, cálido, cercano y sin sermonear. '+
+  'Si te hacen una pregunta general o charlan de otro tema, respóndela brevemente y con gusto, y luego, si calza, reconecta con su bienestar o movimiento sin forzarlo. '+
+  'Responde corto (2 a 5 oraciones, sin listas largas ni markdown, texto plano). Usa su nombre solo a veces. No repitas frases de respuestas anteriores. Haz como mucho una pregunta al final. '+
+  'No eres médico: ante dolor, mareo o síntomas, aconseja parar y consultar a un profesional; nunca propongas ejercicios que carguen las zonas que cuida. No existen monedas ni tokens: hay un ranking semanal de 25 personas (Oro puestos 1 a 3, Plata 4 a 8, Bronce 9 a 15) y mejores premios cuanto mejor sea el puesto; el Pase Hexamove ($4.990 al mes) mejora el premio de cada puesto. Propón solo actividades de las que le gustan (sus gustos), nunca otra distinta, salvo que ella la pida. No inventes datos de su progreso: usa solo los de abajo. '+
+  'Si corresponde ofrecer un botón, termina tu mensaje con UNA etiqueta en una línea aparte: [[5]] misión de 5 minutos, [[suave]] misión suave si está cansado, [[explorar]] ver todas las misiones, o [[m:ID]] para una misión concreta del catálogo. Sin etiqueta si no hace falta.\n\n'+
+  'DATOS DE LA PERSONA\nNombre: '+S.nombre+'\nNivel: '+(S.nivel||'sin definir')+'\nLe gusta: '+(S.gustos.join(', ')||'sin definir')+'\nObjetivos: '+(S.objetivos.join(', ')||'sin definir')+
+  '\nLesiones/zonas a cuidar: '+((S.lesiones.filter(function(x){return x!=='Ninguna'&&!esBandera(x);}).join(', '))||'ninguna')+(banderasUsuario().length?'; además tiene una condición de salud que exige autorización médica y solo debes proponer misiones suaves':'')+(z.length?' (evitar carga en: '+z.join(', ')+')':'')+
+  '\nTiempo libre hoy: '+totalHoy()+' min; hecho: '+hechoHoy()+'; restante: '+restanteHoy()+' min (si es 0, ya cumplió el día: no propongas más misiones, felicítala)\nRacha: '+r+' días\nMinutos esta semana: '+minSemana()+' (semana pasada: '+minSemanaAnt()+')\nMisiones totales: '+S.misiones.length+
+  (ult.length?'\nÚltimas misiones: '+ult.join('; '):'')+(mf?'\nCumple más en la '+mf:'')+(tf?'\nTipo favorito: '+TIPOS[tf].n:'')+
+  '\nÁnimo hoy: '+((S.moodDia===isoOff(0)&&S.mood)||'no dicho')+'\nRanking: '+(function(){var q=rankInfo();return q.pos?'puesto '+q.pos+' de '+q.n+' esta semana, '+q.pts+' puntos ('+tierDe(q.pos).n+')':'aún sin puntos esta semana';})()+'. Pase premium: '+(S.premium?'sí':'no')+'. Evaluación de aptitud: '+(S.eval?S.eval.estado:'sin evaluar')+(S.autorizado?' (con autorización médica)':'')+
+  '\n\nCATÁLOGO DE MISIONES (id=nombre), ya filtrado por lo que le gusta\n'+cat;
+}
+function turnosHexi(){
+  var h=S.chat.slice(-14).map(function(m){return {role:m.de==='u'?'user':'assistant',content:m.t};});
+  while(h.length&&h[0].role!=='user')h.shift();
+  var out=[{role:'user',content:contextoHexi()}];
+  return out.concat(h);
+}
+function partirAccion(t){
+  var act=null,m=t.match(/\[\[\s*([^\]\s]+)\s*\]\]\s*$/);
+  if(m){var a=m[1];t=t.slice(0,m.index).trim();
+    if(a==='5')act={l:'Misión de 5 minutos',a:'5'};
+    else if(a==='suave')act={l:'Pedir misión suave',a:'suave'};
+    else if(a==='explorar')act={l:'Explorar misiones',a:'explorar'};
+    else if(a.indexOf('m:')===0){var mi=MISIONES.filter(function(x){return x.id===a.slice(2);})[0];if(mi)act={l:'Ver "'+mi.n+'"',a:a};}}
+  return {t:t.replace(/\[\[[^\]]*$/,'').trim(),act:act};
+}
+function respaldo(txt,aviso){var r=responder(txt);chatBusy=false;streamTxt='';ctl=null;addChat('h',r.t,r.act);if(aviso)toast(aviso);}
+function enviar(txt){
+  txt=(txt||'').trim();if(!txt||chatBusy)return;
+  var turnos=null;
+  addChat('u',txt);dar('hexi');chatBusy=true;streamTxt='';pintarChat();
+  if(!sampleFn||sampleOff){var r=responder(txt);setTimeout(function(){chatBusy=false;addChat('h',r.t,r.act);},700);return;}
+  turnos=turnosHexi();
+  ctl=new AbortController();
+  sampleFn(turnos,{cache:false,modelTier:'quick',signal:ctl.signal,onText:function(u){streamTxt=partirAccion(u.text).t;pintarChat();}}).then(function(res){
+    var p=partirAccion(res.text);chatBusy=false;streamTxt='';ctl=null;
+    addChat('h',p.t||res.text,p.act);
+  }).catch(function(e){
+    var c=e&&e.code,parcial=e&&e.text?partirAccion(e.text).t:'';
+    if(c==='cancelled'){chatBusy=false;streamTxt='';ctl=null;if(parcial)addChat('h',parcial);else pintarChat();return;}
+    if(c==='not_granted'||c==='sampling_disabled'||c==='not_declared'||c==='capability_disabled'||c==='capability_removed'){sampleOff=true;respaldo(txt,'Hexi responderá en modo básico.');return;}
+    if(c==='rate_limited'){chatBusy=false;streamTxt='';ctl=null;addChat('h',parcial||'Estoy recibiendo muchos mensajes seguidos. Prueba de nuevo en unos minutos.');return;}
+    if(parcial){chatBusy=false;streamTxt='';ctl=null;addChat('h',parcial+' …(se cortó la conexión)');return;}
+    respaldo(txt,'Hexi tuvo un problema; respondí en modo básico.');
+  });
+}
+$('chatForm').addEventListener('submit',function(e){e.preventDefault();var i=$('chatIn');var v=i.value;i.value='';enviar(v);});
+
+/* ============ explorar ============ */
+var fMin=0,fTipo='';
+function pintarExplorar(){
+  var a=$('fMin');a.innerHTML='';
+  [[0,'Todas'],[5,'5 min'],[10,'10 min'],[20,'20 min']].forEach(function(x){var b=document.createElement('button');b.type='button';b.className='chip'+(fMin===x[0]?' on':'');b.textContent=x[1];b.onclick=function(){fMin=x[0];pintarExplorar();};a.appendChild(b);});
+  var t=$('fTipo');t.innerHTML='';
+  var bt=document.createElement('button');bt.type='button';bt.className='chip'+(fTipo===''?' on':'');bt.textContent='Todos los tipos';bt.onclick=function(){fTipo='';pintarExplorar();};t.appendChild(bt);
+  Object.keys(TIPOS).forEach(function(k){var b=document.createElement('button');b.type='button';b.className='chip'+(fTipo===k?' on':'');b.textContent=TIPOS[k].n;b.onclick=function(){fTipo=k;pintarExplorar();};t.appendChild(b);});
+  var l=MISIONES.filter(function(m){return (!fMin||m.min===fMin)&&(!fTipo||m.t===fTipo);});
+  $('expInfo').textContent=l.length+' misiones. Las que cargan una zona que cuidas aparecen apagadas.';
+  var c=$('listaMisiones');c.innerHTML='';
+  l.forEach(function(m){
+    var cf=conflicto(m),b=document.createElement('button');b.type='button';b.className='row-btn'+(cf.length?' off':'');
+    b.innerHTML='<span class="ico '+(m.t==='fuerza'?'r':(m.t==='movilidad'?'':(m.t==='recinto'?'s':'l')))+'">'+ic(TIPOS[m.t].i)+'</span><span class="grow"><b>'+esc(m.n)+'</b><br><span class="small">'+m.min+' min · '+TIPOS[m.t].n+(matchGusto(m)?' · te gusta':'')+(cf.length?' · carga '+cf[0]:'')+'</span></span>'+ic('chev','s');
+    b.onclick=function(){if(cf.length){toast('Hexi la evita porque cuidas tu '+cf[0]+'.');return;}show('hoy');mostrarMision(m,razonDe(m,false));};
+    c.appendChild(b);
+  });
+}
+
+/* ============ ranking semanal ============ */
+var LIGA=['Camila','Rodrigo','Paulina','Felipe','Valentina','Matías','Javiera','Sebastián','Constanza','Diego','Francisca','Tomás','Antonia','Nicolás','Catalina','Joaquín','Fernanda','Vicente','Daniela','Ignacio','Macarena','Benjamín','Sofía','Cristóbal'];
+var CAPS=[300,210,150,90,260,180,120,60,330,240,200,140,100,280,170,80,220,130,70,190,110,250,160,50];
+var TIERS=[
+ {id:'oro',n:'Oro',txt:'Puestos 1 a 3',max:3,libre:{n:'Clase de spinning',p:'Gimnasio aliado',i:'heart'},pase:{n:'Mes de gimnasio',p:'Cadena aliada',i:'dumb'}},
+ {id:'plata',n:'Plata',txt:'Puestos 4 a 8',max:8,libre:{n:'Smoothie de frutas',p:'Local saludable aliado',i:'leaf'},pase:{n:'Masaje descontracturante',p:'Centro aliado',i:'leaf'}},
+ {id:'bronce',n:'Bronce',txt:'Puestos 9 a 15',max:15,libre:{n:'Café de especialidad',p:'Cafetería aliada',i:'gift'},pase:{n:'Clase de spinning',p:'Gimnasio aliado',i:'heart'}}
+];
+var TIER_SIN={id:'sin',n:'Sin premio',txt:'Puesto 16 en adelante',libre:null,pase:{n:'Café de especialidad',p:'Cafetería aliada',i:'gift'}};
+function h01(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return ((h>>>0)%1000)/1000;}
+function sumarDias(iso,n){var d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return isoD(d);}
+function lunesDe(iso){var d=new Date(iso+'T12:00:00');return sumarDias(iso,-((d.getDay()+6)%7));}
+function ptsRival(i,lunes,dia){return Math.round(CAPS[i]*(.7+.6*h01(LIGA[i]+lunes))*(dia+1)/7);}
+function ptsSemana(lunes){var fin=sumarDias(lunes,6);return S.misiones.filter(function(m){return m.fecha>=lunes&&m.fecha<=fin;}).reduce(function(a,m){return a+ptsM(m);},0);}
+function listaRanking(lunes,dia){
+  var l=LIGA.map(function(n,i){return {n:n,p:ptsRival(i,lunes,dia),amigo:i<4};});
+  l.push({n:S.nombre,p:ptsSemana(lunes),yo:true});
+  l.sort(function(a,b){return b.p-a.p||(a.yo?1:0)-(b.yo?1:0);});
+  return l;
+}
+function tierDe(pos){if(pos)for(var i=0;i<TIERS.length;i++)if(pos<=TIERS[i].max)return TIERS[i];return TIER_SIN;}
+function premioDe(t,pase){return pase?t.pase:t.libre;}
+function diaSemana(){return (ahora().getDay()+6)%7;}
+function rankInfo(){
+  var lunes=lunesDe(isoOff(0)),l=listaRanking(lunes,diaSemana()),i=l.findIndex(function(x){return x.yo;}),pts=ptsSemana(lunes);
+  return {lista:l,idx:i,pos:pts>0?i+1:null,n:l.length,pts:pts};
+}
+function cerrarSemanas(){
+  var hoyL=lunesDe(isoOff(0));
+  if(!S.semIni){S.semIni=hoyL;save();return;}
+  var l=S.semIni,hubo=false;
+  while(l<hoyL){
+    var pts=ptsSemana(l);
+    if(pts>0){
+      var r=listaRanking(l,6),pos=r.findIndex(function(x){return x.yo;})+1,t=tierDe(pos);
+      S.semanas.unshift({w:l,pos:pos,n:r.length,pts:pts,tier:t.id,ok:false});
+    }
+    l=sumarDias(l,7);hubo=true;
+  }
+  if(hubo||S.semIni!==hoyL){S.semIni=hoyL;save();}
+}
+function tierPorId(id){return TIERS.filter(function(t){return t.id===id;})[0]||TIER_SIN;}
+function filaPremio(pr,etq){return '<div class="row"><span class="ico s">'+ic(pr.i)+'</span><div class="grow"><p class="small" style="margin:0">'+etq+'</p><b>'+pr.n+'</b><p class="small" style="margin:0">'+pr.p+'</p></div></div>';}
+function pintarRanking(){
+  cerrarSemanas();
+  var ri=rankInfo(),t=tierDe(ri.pos),dia=diaSemana(),dias=6-dia;
+  $('rkPos').textContent=ri.pos?'#'+ri.pos:'Sin puesto';
+  $('rkDe').textContent=ri.pos?'de '+ri.n+' personas · '+ri.pts+' puntos esta semana':'Haz una misión comprobada para entrar al ranking de la semana.';
+  $('rkTier').textContent=ri.pos?t.n:'';$('rkTier').hidden=!ri.pos;
+  $('rkCierra').textContent=dias===0?'La semana cierra hoy.':'La semana cierra el domingo, en '+dias+(dias===1?' día.':' días.');
+  var falta='';
+  if(!ri.pos){falta='Cada misión comprobada suma puntos: más minutos y mejor comprobación, más puntos.';}
+  else{
+    var idx=TIERS.indexOf(t);
+    if(t===TIER_SIN)idx=TIERS.length;
+    if(idx===0){falta='Estás en el Oro. Mantén la ventaja hasta el domingo.';}
+    else{var obj=TIERS[idx-1],rival=ri.lista[obj.max-1],f=Math.max(1,rival.p-ri.pts+1);falta='Te '+(f===1?'falta 1 punto':'faltan '+f+' puntos')+' para llegar al '+obj.n+' (puesto '+obj.max+' o mejor).';}
+  }
+  $('rkFalta').textContent=falta;
+  var pa=premioDe(t,false),pp=t.pase;
+  $('premioAhora').innerHTML=ri.pos?(pa?filaPremio(pa,'Premio de tu puesto hoy'):'<p class="small">Con tu puesto actual todavía no hay premio gratuito. Sube al puesto 15 o mejor.</p>'):'<p class="small">Entra al ranking para ver tu premio.</p>';
+  $('premioPase').innerHTML=filaPremio(pp,S.premium?'Tu premio con el Pase activo':'Con el Pase Hexamove en tu puesto');
+  $('btnPremium').textContent=S.premium?'Pase activo · desactivar':'Activar Pase (demostración)';
+  var tp=$('tablaPremios');tp.innerHTML='';
+  TIERS.concat([TIER_SIN]).forEach(function(x){
+    var d=document.createElement('div');d.className='card';
+    d.innerHTML='<div class="row between"><b>'+x.n+'</b><span class="small">'+x.txt+'</span></div>'+
+     '<p class="small" style="margin:0"><b style="color:var(--ink)">Gratis:</b> '+(x.libre?x.libre.n+' · '+x.libre.p:'sin premio')+'</p>'+
+     '<p class="small" style="margin:0"><b style="color:var(--sun-ink)">Con Pase:</b> '+x.pase.n+' · '+x.pase.p+'</p>';
+    tp.appendChild(d);
+  });
+  var rl=$('rkLista');rl.innerHTML='';
+  function fila(f,i){var d=document.createElement('div');d.className='li'+(f.yo?' me':'');d.innerHTML='<b style="width:26px">'+(i+1)+'</b><span class="grow">'+esc(f.n)+(f.yo?' (tú)':'')+(f.amigo?' · amigo':'')+'</span><b>'+f.p+'</b>';rl.appendChild(d);}
+  ri.lista.slice(0,8).forEach(fila);
+  if(ri.idx>=8){var s=document.createElement('p');s.className='small';s.style.textAlign='center';s.textContent='…';rl.appendChild(s);fila(ri.lista[ri.idx],ri.idx);}
+  var pr=$('porReclamar');pr.innerHTML='';
+  var pend=S.semanas.filter(function(x){return !x.ok;});
+  $('hPend').hidden=!pend.length;
+  pend.forEach(function(sm){
+    var tr=tierPorId(sm.tier),pre=premioDe(tr,S.premium),d=document.createElement('div');d.className='card sun';
+    var ini=sm.w,fin=sumarDias(sm.w,6);
+    if(!pre){d.className='card';d.innerHTML='<b>Semana del '+fmt(ini)+' al '+fmt(fin)+'</b><p class="small">Terminaste #'+sm.pos+' de '+sm.n+'. Sin premio gratuito esta vez; con el Pase habrías recibido un café.</p>';
+      var bo=document.createElement('button');bo.className='btn soft sm';bo.textContent='Entendido';bo.onclick=function(){sm.ok=true;save();pintarRanking();};d.appendChild(bo);pr.appendChild(d);return;}
+    d.innerHTML='<b>Semana del '+fmt(ini)+' al '+fmt(fin)+'</b><p class="small" style="color:var(--sun-ink)">Terminaste #'+sm.pos+' de '+sm.n+' · '+tr.n+(S.premium?' con Pase':'')+'</p>'+filaPremio(pre,'Tu premio');
+    var b=document.createElement('button');b.className='btn';b.textContent='Reclamar premio';
+    b.onclick=function(){var cod='HX-'+Math.random().toString(36).slice(2,7).toUpperCase();S.canjes.unshift({n:pre.n,p:pre.p,cod:cod,f:isoOff(0)});sm.ok=true;dar('canje');save();pintarRanking();toast('Premio listo. Muestra el código '+cod+' en el local.');};
+    d.appendChild(b);pr.appendChild(d);
+  });
+  var mc=$('misCanjes');mc.innerHTML=S.canjes.length?'':'<p class="small">Todavía no has reclamado ningún premio.</p>';
+  S.canjes.forEach(function(c2){var d=document.createElement('div');d.className='card';d.innerHTML='<b>'+esc(c2.n)+'</b><p class="small">'+esc(c2.p||'')+' · Código '+c2.cod+' · '+fmt(c2.f)+'</p>';mc.appendChild(d);});
+}
+$('btnPremium').onclick=function(){S.premium=!S.premium;save();pintarRanking();toast(S.premium?'Pase activo: tus premios suben de nivel.':'Pase desactivado.');};
+
+/* ============ aptitud ============ */
+function ventanaMin(b){var r=S.horarios[b];if(!r)return 0;return Math.max(0,minVentana(r));}
+function misionesSeguras(){
+  var gc=gustosCat(),band=banderasUsuario().length>0,tope=band?1:3;
+  return MISIONES.filter(function(m){return (!gc.length||m.g.some(function(g){return gc.indexOf(g)>=0;}))&&!conflicto(m).length&&m.niv<=tope;});
+}
+function evaluar(){
+  var razones=[],cuidados=[],estado='apto',causa=null;
+  var band=banderasUsuario();
+  if(band.length&&!S.autorizado){
+    estado='noapto';causa='med';
+    razones.push('Marcaste '+lista(band.map(function(x){return x.toLowerCase();}))+'. Con eso, hacer actividad física sin la autorización de un profesional de salud puede ser riesgoso, y Hexamove no la reemplaza.');
+  }else if(band.length){
+    estado='cuidados';
+    cuidados.push('Tienes autorización médica: solo te propondré misiones suaves. Detente ante mareo, dolor de pecho o falta de aire.');
+  }
+  var z=zonasCuidadas();
+  if(z.length)cuidados.push('Voy a evitar ejercicios que carguen: '+lista(z)+'.');
+  var seg=misionesSeguras();
+  var vent=S.bloques.map(ventanaMin),maxV=vent.length?Math.max.apply(null,vent):0;
+  if(!S.bloques.length){
+    estado='noapto';causa=causa||'horario';razones.push('No elegiste ningún bloque libre, así que no tengo cuándo proponerte una misión ni cuándo avisarte.');
+  }else if(maxV<5){
+    estado='noapto';causa=causa||'horario';razones.push('Tus bloques libres duran menos de 5 minutos. La misión más corta de Hexamove dura 5, y necesita ese tiempo completo.');
+  }
+  if(!seg.length){
+    estado='noapto';causa=causa||'zonas';razones.push('Con las zonas que cuidas, ninguna de las actividades que elegiste tiene misiones seguras. Prueba con otras actividades o consulta a un profesional.');
+  }else if(maxV>=5){
+    var minNec=Math.min.apply(null,seg.map(function(m){return m.min;}));
+    if(minNec>maxV){estado='noapto';causa=causa||'horario';razones.push('Tus actividades seguras necesitan al menos '+minNec+' minutos seguidos y tu bloque más largo dura '+maxV+'.');}
+  }
+  if(estado!=='noapto'){
+    var sem=S.bloques.filter(function(b){return b!=='Fin de semana';}),fin=S.bloques.indexOf('Fin de semana')>=0;
+    var dia=sem.reduce(function(a,b){return a+Math.floor(ventanaMin(b)/5)*5;},0);
+    var pot=dia*5+(fin?2*Math.floor(ventanaMin('Fin de semana')/5)*5:0);
+    if(!sem.length&&fin)cuidados.push('Solo tienes tiempo el fin de semana: son 2 días, y para formar el hábito conviene sumar algún bloque entre semana.');
+    if(sem.length&&dia<10)cuidados.push('Entre semana solo te caben misiones de 5 minutos. Sirve para crear el hábito; si puedes, amplía un bloque.');
+    if(pot>0&&pot<150)cuidados.push('Con tus bloques sumarías hasta '+pot+' minutos a la semana, el '+Math.round(pot/150*100)+' % de los 150 que recomienda la OMS. Es un buen comienzo, no el techo.');
+    if(cuidados.length&&estado==='apto')estado='cuidados';
+  }
+  return {estado:estado,razones:razones,cuidados:cuidados,causa:causa};
+}
+var aptoVuelve='hoy';
+function pintarApto(){
+  var e=evaluar();S.eval={estado:e.estado,ts:Date.now()};save();
+  var info={apto:['Apto','Tu plan es seguro y cabe en tu día.','var(--brand-soft)','var(--brand-deep)'],cuidados:['Apto con ajustes','Puedes usar Hexamove, con estos cuidados.','var(--sun)','var(--sun-ink)'],noapto:['No apto por ahora','Todavía no puedo armarte un plan seguro.','var(--rosa)','var(--danger)']}[e.estado];
+  var c=$('aptoCard');c.style.background=info[2];
+  $('aptoTitulo').textContent=info[0];$('aptoTitulo').style.color=info[3];
+  $('aptoSub').textContent=info[1];
+  var cont=$('aptoLista');cont.innerHTML='';
+  function it(t,tipo){var d=document.createElement('div');d.className='row';d.style.alignItems='flex-start';d.innerHTML='<span class="ico s '+(tipo==='x'?'':'l')+'">'+ic(tipo==='x'?'shield':'check')+'</span><p class="grow" style="font-size:14.5px;margin:0">'+esc(arguments[0])+'</p>';cont.appendChild(d);}
+  e.razones.forEach(function(t){it(t,'x');});
+  e.cuidados.forEach(function(t){it(t,'c');});
+  if(e.estado==='apto'){it('Tus bloques libres y tus actividades encajan, y no declaraste nada que lo impida.','c');}
+  $('aptoSeguir').hidden=e.estado==='noapto';
+  $('aptoEditar').hidden=e.estado!=='noapto';
+  $('aptoAut').hidden=!(e.estado==='noapto'&&e.causa==='med');
+}
+$('aptoSeguir').onclick=function(){show(aptoVuelve);aptoVuelve='hoy';};
+$('aptoEditar').onclick=function(){var e=evaluar();S.editando=true;save();show(e.causa==='horario'?'ob4':'ob3');};
+$('aptoAut').onclick=function(){S.autorizado=true;save();pintarApto();toast('Anotado. Te propondré solo misiones suaves.');};
+
+/* ============ perfil ============ */
+function pintarPerfil(){
+  $('perfilNombre').textContent=S.nombre;
+  $('statMisiones').textContent=S.misiones.length;
+  $('statMin').textContent=S.misiones.reduce(function(a,b){return a+b.min;},0);
+  var alta=S.misiones.filter(function(x){return x.conf==='alta';}).length;
+  $('statComp').textContent=(S.misiones.length?Math.round(alta/S.misiones.length*100):0)+'%';
+  $('comodines').textContent=S.comodines;
+  var sab=[];
+  sab.push('<span><b>Te gusta:</b> '+esc(lista(S.gustos.map(function(x){return x.toLowerCase();}))||'por definir')+'.</span>');
+  if(S.objetivos.length)sab.push('<span><b>Tu meta:</b> '+esc(lista(S.objetivos.map(function(x){return x.toLowerCase();})))+'.</span>');
+  sab.push('<span><b>Nivel:</b> '+({1:'partes de cero',2:'a veces te mueves',3:'estás activo'}[S.nivel])+(S.ajuste<0?' · bajé la exigencia por tu feedback':(S.ajuste>0?' · subí la exigencia por tu feedback':''))+'.</span>');
+  var z=zonasCuidadas();sab.push('<span><b>Cuido:</b> '+(z.length?esc(lista(z)):'nada declarado')+'.</span>');
+  sab.push('<span><b>Te escribo por '+esc(S.canal)+(S.telefono?' al '+telFmt():'')+':</b> '+S.bloques.map(function(b){var r=S.horarios[b]||{d:'—',h:'—'};return esc(b.toLowerCase())+' ('+r.d+' a '+r.h+')';}).join(', ')+'.</span>');
+  var mf=mejorFranja();if(mf)sab.push('<span><b>Descubrí que:</b> cumples más en la '+mf+'.</span>');
+  $('hexiSabe').innerHTML=sab.join('');
+  var ins=$('insignias');ins.innerHTML='';
+  INSIG.forEach(function(i){var d=document.createElement('div');d.className='badge'+(S.insignias.indexOf(i.id)>=0?' got':'');d.innerHTML='<span class="d">'+ic(i.i)+'</span><span>'+i.n+'</span>';ins.appendChild(d);});
+  var h=$('historial');h.innerHTML=S.misiones.length?'':'<p class="small">Sin misiones todavía.</p>';
+  S.misiones.slice(0,8).forEach(function(m){
+    var d=document.createElement('div');d.className='card';
+    d.innerHTML='<div class="row between"><b>'+esc(m.n)+'</b><span class="tag '+m.conf+'">'+m.conf+'</span></div><p class="small">'+m.min+' min · '+esc(m.metodo)+' · '+(ptsM(m)>0?'+'+ptsM(m)+' puntos':'sin puntos')+' · '+fmt(m.fecha)+(m.sent?' · '+({facil:'fácil',justa:'justa',dificil:'difícil'}[m.sent]):'')+'</p>';
+    h.appendChild(d);
+  });
+  $('demoDia').textContent='Día simulado: '+fmt(isoOff(0))+(S.off?' (+'+S.off+')':'');
+}
+$('btnComodin').onclick=function(){
+  if(S.comodines<=0){toast('No te quedan comodines este mes.');return;}
+  var hoy=isoOff(0);if(S.dias[hoy]){toast('Hoy ya cumpliste, no necesitas comodín.');return;}
+  S.comodines--;S.dias[hoy]='c';save();pintarPerfil();toast('Comodín usado. Tu racha de '+racha()+' días sigue viva.');
+};
+$('btnEditar').onclick=function(){S.editando=true;save();$('nombre').value=S.nombre;$('telefono').value=S.telefono?telFmt().slice(4):'';show('ob0');};
+$('btnDia').onclick=function(){S.off++;S.mood=null;S.moodDia=null;save();cerrarSemanas();pintarPerfil();toast('Avanzaste un día. Hexi lo nota al abrir Hoy.');};
+$('btnSemana').onclick=function(){var d=(ahora().getDay()+6)%7;S.off+=7-d;S.mood=null;S.moodDia=null;save();cerrarSemanas();pintarPerfil();toast('La semana cerró. Revisa tus premios en Ranking.');};
+$('btnSeed').onclick=function(){
+  var ids=['man5','pausa5','estir10','baile10','barrio20'],mins=[5,5,10,10,20];
+  S.misiones=S.misiones.filter(function(m){return m.seed!==1;});
+  for(var i=5;i>=1;i--){
+    var iso=isoOff(-i),mm=MISIONES.filter(function(x){return x.id===ids[5-i];})[0];
+    if(S.dias[iso])continue;
+    S.dias[iso]='m';S.misiones.push({id:mm.id,n:mm.n,t:mm.t,min:mm.min,metodo:'Sensor del celular',metodoId:'sensor',conf:'alta',pts:mm.min*2,fecha:iso,hora:[18,19,13,20,19][5-i],sent:'justa',mood:null,seed:1});
+  }
+  S.misiones.sort(function(a,b){return a.fecha<b.fecha?1:-1;});
+  ['primera','racha3'].forEach(dar);
+  var l0=lunesDe(isoOff(-5));if(!S.semIni||l0<S.semIni)S.semIni=l0;
+  save();cerrarSemanas();pintarPerfil();toast('Cargué 5 días de ejemplo con sus puntos de ranking.');
+};
+
+/* ============ datos en la nube del equipo ============ */
+var nube={doc:null,id:null,listo:false,off:false,timer:null,ocupado:false};
+function racha_(){try{return racha();}catch(e){return 0;}}
+function resumenNube(){
+  var c=JSON.parse(JSON.stringify(S));delete c.chat;c.lesiones=(c.lesiones||[]).filter(function(x){return !esBandera(x);});delete c.autorizado;
+  return {uid:nube.id||null,ts:S.ts||Date.now(),reiniciado:false,
+    nombre:S.nombre,telefono:S.telefono,nivel:S.nivel,gustos:S.gustos,objetivos:S.objetivos,lesiones:S.lesiones.filter(function(x){return !esBandera(x);}),bloques:S.bloques,canal:S.canal,
+    misionesTotal:S.misiones.length,minutosTotal:S.misiones.reduce(function(a,m){return a+m.min;},0),diasActivos:Object.keys(S.dias).length,racha:racha_(),canjesTotal:S.canjes.length,aptitud:S.eval?S.eval.estado:null,puntosSemana:ptsSemana(lunesDe(isoOff(0))),semanasCerradas:S.semanas.length,premium:S.premium,
+    s:c};
+}
+function estadoNube(t){var e=$('syncEstado');if(e)e.textContent=t;}
+window.__sync=function(){
+  if(!nube.doc||!nube.listo||nube.off)return;
+  clearTimeout(nube.timer);
+  nube.timer=setTimeout(function(){
+    if(nube.ocupado){window.__sync();return;}
+    nube.ocupado=true;
+    nube.doc.set(resumenNube()).then(function(){estadoNube('Guardado en la nube del equipo.');}).catch(function(){nube.off=true;estadoNube('No se pudo guardar en la nube del equipo. Descarga tus datos para enviarlos.');}).then(function(){nube.ocupado=false;});
+  },1500);
+};
+function exportarDatos(){
+  var txt=JSON.stringify(resumenNube(),null,2),fn='hexamove-'+norm(S.nombre||'usuario').replace(/[^a-z0-9]+/g,'-')+'.json';
+  var mostrar=function(){$('exportTxt').value=txt;$('exportBox').hidden=false;$('exportTxt').focus();$('exportTxt').select();};
+  try{
+    if(window.claude&&claude.use){claude.use('downloads').then(function(d){
+      if(!d){mostrar();return;}
+      d.save({filename:fn,data:txt}).then(function(){toast('Listo. Envía el archivo al equipo.');}).catch(function(e){if(!e||e.code!=='declined')mostrar();});
+    }).catch(mostrar);}else mostrar();
+  }catch(e){mostrar();}
+}
+(function iniciarNube(){
+  try{
+    if(!(window.claude&&claude.use))return;
+    Promise.all([claude.use('db'),claude.use('user')]).then(function(r){
+      var db=r[0],u=r[1];if(!db||!u)return;
+      return u.id().then(function(id){
+        if(!id)return;
+        nube.id=id;nube.doc=db.collection('usuarios').doc(id);
+        return nube.doc.get().then(function(snap){
+          var rem=snap.exists?snap.data():null;
+          if(rem&&rem.s&&rem.s.onboarded&&(!S.onboarded||rem.ts>(S.ts||0))){
+            var ns=Object.assign(blank(),rem.s,{chat:S.chat||[]});ns.ts=rem.ts;
+            try{localStorage.setItem(KEY,JSON.stringify(ns));}catch(e){}
+            location.reload();return;
+          }
+          nube.listo=true;estadoNube('Se guarda en la nube del equipo cada vez que avanzas.');
+          if(S.onboarded)window.__sync();
+        });
+      });
+    }).catch(function(){nube.off=true;});
+  }catch(e){}
+})();
+function borrarTodo(){
+  var fin=function(){try{localStorage.removeItem(KEY);}catch(e){}S=blank();location.reload();};
+  if(nube.doc&&S.onboarded){
+    var snap=resumenNube();
+    Promise.race([nube.doc.collection('historial').add(snap).then(function(){return nube.doc.set({uid:nube.id,reiniciado:true,ts:Date.now(),s:null});}),new Promise(function(r){setTimeout(r,2500);})]).then(fin,fin);
+  }else fin();
+}
+$('btnReset').onclick=borrarTodo;
+$('btnCero').onclick=function(){$('btnCero').hidden=true;$('ceroConf').hidden=false;};
+$('ceroNo').onclick=function(){$('ceroConf').hidden=true;$('btnCero').hidden=false;};
+$('ceroSi').onclick=borrarTodo;
+$('btnExport').onclick=exportarDatos;
+
+/* ============ grupo ============ */
+function pintarGrupo(){
+  var c=$('cadena');c.innerHTML='';var gente=['Camila','Rodrigo',S.nombre,'Paulina'];
+  gente.forEach(function(p){var ok=S.grupoHecho.indexOf(p)>=0,s=document.createElement('span');s.className='chip static'+(ok?' on':'');s.innerHTML=(ok?ic('check','s'):'')+esc(p);c.appendChild(s);});
+  var falta=gente.filter(function(p){return S.grupoHecho.indexOf(p)<0;});
+  $('cadenaTxt').textContent=falta.length?'Falta que cumplan: '+lista(falta)+'.':'Cadena cerrada. Hoy cumplió todo el grupo.';
+  var t=$('tabla');t.innerHTML='';
+  var ri=rankInfo();
+  ri.lista.filter(function(f){return f.amigo||f.yo;}).forEach(function(f,i){
+    var d=document.createElement('div');d.className='li'+(f.yo?' me':'');
+    d.innerHTML='<b style="width:20px">'+(i+1)+'</b><span class="grow">'+esc(f.n)+(f.yo?' (tú)':'')+'</span><b>'+f.p+' pts</b>';t.appendChild(d);
+  });
+}
+qa('[data-unirse]').forEach(function(b){b.onclick=function(){dar('grupo');save();toast('Te inscribiste en: '+b.dataset.unirse+'. Te aviso 30 minutos antes.');};});
+
+/* ============ navegación y arranque ============ */
+document.addEventListener('click',function(e){
+  var g=e.target.closest('[data-go]');if(g){show(g.dataset.go);}
+  var t=e.target.closest('[data-tab]');if(t){show(t.dataset.tab);}
+});
+$('hxWelcome').innerHTML=HEX;$('hxResumen').innerHTML=HEX;qa('[data-hx]').forEach(function(e){e.innerHTML=HEX;});
+qa('[data-ic]').forEach(function(e){e.innerHTML=ic(e.dataset.ic);});
+$('icBack').innerHTML=ic('back','s');$('icSend').innerHTML=ic('send');
+[['nHoy','home','Hoy'],['nHexi','chat','Hexi'],['nGrupo','users','Grupo'],['nMon','star','Ranking'],['nPerfil','user','Perfil']].forEach(function(x){$(x[0]).innerHTML=ic(x[1])+x[2];});
+chips($('gustos'),GUSTOS,S.gustos,'gustosX');
+chips($('objetivos'),OBJ.map(function(o){return o.n;}),S.objetivos,'objetivosX');
+chips($('lesiones'),LESIONES,S.lesiones,'lesionesX');
+chips($('bloques'),BLOQUES,S.bloques,'bloquesX',pintarHorarios);
+pintarHorarios();pintarNivel();
+qa('#canal button').forEach(function(x){x.classList.toggle('on',x.dataset.val===S.canal);});
+function telLimpio(v){var d=String(v||'').replace(/\D/g,'');if(d.length===11&&d.indexOf('56')===0)d=d.slice(2);return d;}
+function telFmt(){var d=S.telefono||'';return d.length===9?'+56 '+d[0]+' '+d.slice(1,5)+' '+d.slice(5):'';}
+$('btnStart').addEventListener('click',function(){
+  var n=($('nombre').value||'').trim(),t=telLimpio($('telefono').value),e=$('obErr');
+  if(!n){e.textContent='Escribe tu nombre para continuar.';$('nombre').focus();return;}
+  if(t.length!==9||t[0]!=='9'){e.textContent='Ingresa un celular chileno de 9 dígitos que empiece con 9, por ejemplo 9 1234 5678.';$('telefono').focus();return;}
+  e.textContent='';S.nombre=cap(n);S.telefono=t;save();show('ob1');
+});
+$('telefono').value=S.telefono?telFmt().slice(4):'';
+show(S.onboarded?'hoy':'ob0');
+})();
+</script>
+
+</body>
+</html>
